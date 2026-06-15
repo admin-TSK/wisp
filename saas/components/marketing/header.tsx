@@ -19,7 +19,7 @@ export function MarketingHeader() {
       <div className="border-b border-border/40 bg-bg-elevated/50 py-xs text-center text-footnote text-text-tertiary">
         <span className="font-semibold text-accent">New</span>
         <span className="mx-sm text-border" aria-hidden="true">·</span>
-        MDM fleet rollout + net-of-cache billing for enterprise AI teams
+        Enterprise token compression with MDM rollout and savings-based pricing
       </div>
       <header className="sticky top-0 z-50 border-b border-border/60 bg-bg/85 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-base lg:px-lg">

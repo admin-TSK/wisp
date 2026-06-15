@@ -8,8 +8,8 @@ export function MarketingFooter() {
         <div className="md:col-span-2">
           <Logo href="/" size="sm" />
           <p className="mt-md max-w-sm text-callout leading-relaxed text-text-secondary">
-            Invisible intelligence. Visible savings. Fleet-wide LLM context compression with honest,
-            net-of-cache billing.
+            Enterprise token compression for lower LLM bills. Deploy across the fleet, remove
+            costly input context, and pay from measured net savings.
           </p>
         </div>
         <div>
@@ -53,14 +53,7 @@ export function MarketingFooter() {
         </div>
       </div>
       <div className="border-t border-border px-base py-md text-center text-footnote text-text-tertiary lg:px-lg">
-        © {new Date().getFullYear()} Wisp · Compression powered by{" "}
-        <a
-          href="https://github.com/chopratejas/headroom"
-          className="underline hover:text-text-secondary"
-        >
-          Headroom
-        </a>{" "}
-        (Apache 2.0)
+        © {new Date().getFullYear()} Wisp · Enterprise token compression for lower LLM bills.
       </div>
     </footer>
   );

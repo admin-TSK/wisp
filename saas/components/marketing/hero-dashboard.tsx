@@ -1,6 +1,9 @@
+"use client";
+
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { compactTokens, usd } from "@/lib/utils";
+import { Counter } from "@/components/marketing/counter";
 
 /** Product UI preview for the marketing hero — mirrors the real Savings dashboard. */
 export function HeroDashboard() {
@@ -14,7 +17,7 @@ export function HeroDashboard() {
     <div className="relative">
       {/* Glow behind the mockup */}
       <div
-        className="pointer-events-none absolute -inset-8 rounded-3xl bg-accent/20 blur-3xl"
+        className="pointer-events-none absolute inset-0 rounded-3xl bg-accent/20 blur-3xl sm:-inset-8"
         aria-hidden="true"
       />
       <div className="relative overflow-hidden rounded-xl border border-border/80 bg-surface shadow-[0_24px_80px_rgba(0,0,0,0.45)] ring-1 ring-white/5">
@@ -33,15 +36,21 @@ export function HeroDashboard() {
           <div className="grid grid-cols-3 gap-sm">
             <Card className="!p-md">
               <p className="text-footnote text-text-tertiary">Saved (gross)</p>
-              <p className="mt-xs text-title2 font-bold tabular-nums text-text-primary">{usd(188.88)}</p>
+              <p className="mt-xs text-title2 font-bold tabular-nums text-text-primary">
+                <Counter value={188.88} format={usd} />
+              </p>
             </Card>
             <Card className="!p-md ring-1 ring-accent/30">
               <p className="text-footnote text-text-tertiary">Billable (net)</p>
-              <p className="mt-xs text-title2 font-bold tabular-nums text-text-primary">{usd(140.93)}</p>
+              <p className="mt-xs text-title2 font-bold tabular-nums text-text-primary">
+                <Counter value={140.93} format={usd} />
+              </p>
             </Card>
             <Card className="!p-md">
               <p className="text-footnote text-text-tertiary">Wisp fee (10%)</p>
-              <p className="mt-xs text-title2 font-bold tabular-nums text-accent">{usd(14.09)}</p>
+              <p className="mt-xs text-title2 font-bold tabular-nums text-accent">
+                <Counter value={14.09} format={usd} />
+              </p>
             </Card>
           </div>
 
@@ -49,7 +58,7 @@ export function HeroDashboard() {
             <CardHeader className="border-b border-border px-md py-sm">
               <CardTitle className="!text-callout">By model</CardTitle>
               <span className="text-footnote text-text-tertiary">
-                {compactTokens(1_596_710)} removed
+                <Counter value={1_596_710} format={compactTokens} /> removed
               </span>
             </CardHeader>
             <table className="w-full text-footnote">

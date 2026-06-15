@@ -3,24 +3,27 @@ import Link from "next/link";
 import {
   ArrowRight,
   BarChart3,
+  Boxes,
   Check,
   GitBranch,
   Receipt,
   ShieldCheck,
   SlidersHorizontal,
   Sparkles,
+  X,
   Zap,
 } from "lucide-react";
+import { FleetPreview } from "@/components/marketing/fleet-preview";
 import { HeroDashboard } from "@/components/marketing/hero-dashboard";
 import { SectionHeading } from "@/components/marketing/section-heading";
 
 export const metadata: Metadata = {
-  title: "Wisp — Cut LLM token spend without changing your stack",
+  title: "Wisp — Enterprise token compression for lower LLM bills",
   description:
-    "Fleet-wide context compression for Claude Code, Cursor, and OpenAI-compatible tools. MDM rollout, policy control, and billing on measured net-of-cache savings.",
+    "Fleet-wide token compression for Claude Code, Cursor, and OpenAI-compatible tools. Deploy through MDM or gateway, remove costly input tokens, and pay only a capped share of measured net savings.",
   openGraph: {
-    title: "Wisp — Invisible intelligence. Visible savings.",
-    description: "Enterprise wrapper around Headroom. Deploy once, save everywhere.",
+    title: "Wisp — Enterprise token compression for lower LLM bills.",
+    description: "Compress LLM context across the fleet. Deploy once, save on every request.",
     images: [{ url: "/brand/wisp-og.png", width: 1200, height: 630, alt: "Wisp savings dashboard" }],
   },
 };
@@ -29,25 +32,25 @@ const tools = ["Claude Code", "Cursor", "Codex CLI", "OpenAI SDK", "LiteLLM"] as
 
 const stats = [
   { value: "40–70%", label: "Typical input reduction" },
-  { value: "Net of cache", label: "Honest billing basis" },
-  { value: "10%", label: "Wisp fee on savings" },
+  { value: "Fleet-wide", label: "MDM or gateway rollout" },
+  { value: "10%", label: "Capped share of savings" },
 ] as const;
 
 const steps = [
   {
     icon: SlidersHorizontal,
-    title: "IT deploys one MDM profile",
-    body: "Jamf or Intune pushes the Wisp PKG, then runs a one-line enrol script with your tenant secret. Each Mac gets a unique token in profile.json — no Slack threads asking devs to install anything.",
+    title: "Deploy compression across the fleet",
+    body: "Jamf or Intune pushes the Wisp PKG, then runs a one-line enrol script with your tenant secret. Gateway mode covers central LiteLLM, Bedrock, or Azure chokepoints when endpoint rollout is not the right fit.",
   },
   {
     icon: Zap,
-    title: "Dev tools stay the same",
-    body: "Point ANTHROPIC_BASE_URL or OPENAI_BASE_URL at localhost. Compression happens transparently before each request leaves the machine — no new UI, no workflow change.",
+    title: "Compress costly context before it reaches the model",
+    body: "Wisp removes redundant input tokens from prompts, tool output, logs, RAG, and code context before each request leaves the machine or gateway. Developers keep the same tools and workflows.",
   },
   {
     icon: BarChart3,
-    title: "Finance gets a reconcilable number",
-    body: "Aggregate, PII-free telemetry rolls up to your tenant dashboard. Bill on measured tokens removed, net of provider cache discounts — and export a CSV for FinOps.",
+    title: "Turn removed tokens into verified savings",
+    body: "Aggregate, PII-free telemetry rolls up to your tenant dashboard. Wisp bills on measured tokens removed, net of provider cache discounts, so FinOps can reconcile every dollar.",
   },
 ] as const;
 
@@ -59,13 +62,13 @@ const trust = [
   },
   {
     icon: Receipt,
-    title: "Net-of-cache billing",
-    body: "We never bill counterfactual savings. Removed tokens are valued at the cache-blended rate you'd actually pay — then we take a capped 10%. Reconciliation CSV anytime.",
+    title: "Savings-based billing",
+    body: "Wisp prices from the savings token compression creates. Removed tokens are valued at the cache-blended rate you'd actually pay — then we take a capped 10%. Reconciliation CSV anytime.",
   },
   {
     icon: GitBranch,
-    title: "A meter you can reproduce",
-    body: "The pinned, eval-gated Headroom engine and an inspectable agent mean any invoiced number can be recomputed from the same inputs. Depend on the OSS core, never fork it.",
+    title: "Compression you can reproduce",
+    body: "A pinned, eval-gated compression engine and an inspectable agent mean savings can be recomputed from the same inputs — no black-box math, no surprise true-ups.",
   },
 ] as const;
 
@@ -83,6 +86,23 @@ const enterpriseFeatures = [
   "Negotiated rate-card overrides",
 ] as const;
 
+const proofs = [
+  { icon: Sparkles, label: "Fleet-wide token compression" },
+  { icon: ShieldCheck, label: "PII-free telemetry" },
+  { icon: Boxes, label: "Jamf & Intune ready" },
+  { icon: Receipt, label: "Capped savings-based pricing" },
+] as const;
+
+const comparison = [
+  { dim: "Compression", diy: "One-off scripts with uneven coverage", wisp: "Managed compression on every covered request" },
+  { dim: "Rollout", diy: "Per-dev setup, Slack reminders", wisp: "MDM or gateway rollout at fleet scale" },
+  { dim: "Policy", diy: "Hardcoded per machine", wisp: "Central, per-group, instant" },
+  { dim: "Visibility", diy: "DIY logs, if any", wisp: "Live token removal and savings dashboard" },
+  { dim: "Billing", diy: "Spreadsheets & guesswork", wisp: "Capped share of measured net savings" },
+  { dim: "Upkeep", diy: "You patch and babysit it", wisp: "Pinned, eval-gated compression updates" },
+  { dim: "Support", diy: "Community threads", wisp: "Dedicated enterprise support" },
+] as const;
+
 const faqs = [
   {
     q: "Do developers change their workflow?",
@@ -94,11 +114,11 @@ const faqs = [
   },
   {
     q: "How is billing calculated?",
-    a: "We measure tokens removed by Headroom, value them at a cache-blended rate (so you never pay for discounts you'd already get), take 10% of that net savings, and cap it monthly if agreed.",
+    a: "We measure the input tokens Wisp removes, value them at a cache-blended rate (so you never pay for discounts you'd already get), take 10% of that net savings, and cap it monthly if agreed.",
   },
   {
     q: "What happens when the compression engine updates?",
-    a: "Every Headroom version bump runs a compression-quality eval gate before it ships. Green merges; a regression is flagged for review. You depend on a pinned, tested engine — not a moving target.",
+    a: "Every compression-engine update runs a quality eval gate before it ships. Green merges; a regression is flagged for review — so your savings stay stable and your meter stays reproducible.",
   },
 ] as const;
 
@@ -112,24 +132,18 @@ export default function MarketingPage() {
           <div>
             <span className="inline-flex items-center gap-sm rounded-pill border border-border bg-surface/60 px-md py-xs text-caption text-text-secondary backdrop-blur-sm">
               <Sparkles size={13} className="text-accent" aria-hidden="true" />
-              The enterprise layer for AI coding spend
+              Enterprise token compression for AI fleets
             </span>
             <h1 className="mt-base max-w-xl text-balance text-[2.5rem] font-bold leading-[1.05] tracking-tight text-text-primary sm:text-[3rem] lg:text-[3.5rem]">
-              Cut LLM token spend{" "}
+              Compress LLM tokens.{" "}
               <span className="bg-gradient-to-r from-accent to-[#5AB0FF] bg-clip-text text-transparent">
-                without changing your stack
+                Cut the bill.
               </span>
             </h1>
             <p className="mt-base max-w-lg text-pretty text-body leading-relaxed text-text-secondary">
-              Wisp is the enterprise wrapper around{" "}
-              <a
-                href="https://github.com/chopratejas/headroom"
-                className="text-text-primary underline decoration-border underline-offset-2 transition-colors hover:decoration-accent"
-              >
-                Headroom
-              </a>
-              : MDM fleet rollout, compression policy, PII-free telemetry, and billing your CFO can
-              reconcile.
+              Wisp is token compression for enterprise LLM usage. It removes costly input context
+              before requests hit the model, scales through MDM-managed devices or central gateways,
+              and prices as a capped share of measured net savings.
             </p>
             <div className="mt-lg flex flex-col gap-sm sm:flex-row sm:items-center">
               <Link
@@ -147,7 +161,7 @@ export default function MarketingPage() {
               </Link>
             </div>
             <p className="mt-md text-footnote text-text-tertiary">
-              No credit card · 30-day shadow period · Apache-2.0 compression core
+              No credit card · 30-day shadow period · pay only when compression saves money
             </p>
             <dl className="mt-2xl grid grid-cols-1 gap-sm sm:grid-cols-3">
               {stats.map(({ value, label }) => (
@@ -163,6 +177,18 @@ export default function MarketingPage() {
           </div>
           <HeroDashboard />
         </div>
+      </section>
+
+      {/* Trust bar */}
+      <section className="border-b border-border bg-bg/60 py-base">
+        <ul className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-lg gap-y-sm px-base text-caption text-text-secondary lg:px-lg">
+          {proofs.map(({ icon: Icon, label }) => (
+            <li key={label} className="inline-flex items-center gap-sm">
+              <Icon size={15} className="text-accent" aria-hidden="true" />
+              {label}
+            </li>
+          ))}
+        </ul>
       </section>
 
       {/* Tools strip */}
@@ -188,8 +214,8 @@ export default function MarketingPage() {
       <section id="how-it-works" className="mx-auto max-w-6xl px-base py-2xl lg:px-lg lg:py-3xl">
         <SectionHeading
           eyebrow="How it works"
-          title="Deploy once. Save on every request."
-          description="Compression is commodity — the product is fleet control, honest metering, and zero-touch enterprise rollout."
+          title="Token compression is the product. Enterprise scale is the delivery model."
+          description="Wisp compresses LLM inputs wherever your teams generate them, then makes those savings deployable, governable, and billable across the fleet."
         />
         <ol className="mt-2xl grid gap-lg lg:grid-cols-3">
           {steps.map(({ icon: Icon, title, body }, i) => (
@@ -210,17 +236,46 @@ export default function MarketingPage() {
         </ol>
       </section>
 
+      {/* Product preview — fleet */}
+      <section className="border-t border-border bg-bg-elevated/20 py-2xl lg:py-3xl">
+        <div className="mx-auto grid max-w-6xl items-center gap-2xl px-base lg:grid-cols-[1fr_1.05fr] lg:px-lg">
+          <div>
+            <SectionHeading
+              eyebrow="Fleet control"
+              title="One dashboard for enterprise compression"
+              description="See where Wisp is running, which policy each group uses, and how much token compression is saving — then tune coverage without touching a single laptop."
+            />
+            <ul className="mt-lg space-y-sm">
+              {[
+                "Per-group policy, pushed instantly",
+                "Stale-device health at a glance",
+                "Per-model token reduction, gross and net",
+              ].map((f) => (
+                <li key={f} className="flex items-start gap-sm text-callout text-text-secondary">
+                  <Check size={16} className="mt-0.5 shrink-0 text-success" aria-hidden="true" />
+                  {f}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <FleetPreview />
+        </div>
+      </section>
+
       {/* Trust */}
       <section className="border-y border-border bg-bg-elevated/30 py-2xl lg:py-3xl">
         <div className="mx-auto max-w-6xl px-base lg:px-lg">
           <SectionHeading
             eyebrow="Built for trust"
-            title="The meter is the product"
-            description="Three commitments make a usage-based bill something procurement and security will actually sign off on."
+            title="Compression savings procurement can trust"
+            description="Wisp makes token reduction measurable, privacy-preserving, and reconcilable enough for enterprise finance and security teams."
           />
           <div className="mt-2xl grid gap-lg md:grid-cols-3">
             {trust.map(({ icon: Icon, title, body }) => (
-              <article key={title} className="rounded-xl border border-border bg-surface p-lg">
+              <article
+                key={title}
+                className="rounded-xl border border-border bg-surface p-lg transition hover:border-accent/30 hover:shadow-[0_8px_32px_rgba(10,132,255,0.08)]"
+              >
                 <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-accent/10 text-accent">
                   <Icon size={22} aria-hidden="true" />
                 </span>
@@ -232,12 +287,55 @@ export default function MarketingPage() {
         </div>
       </section>
 
+      {/* Build vs. buy */}
+      <section className="border-y border-border bg-bg-elevated/20 py-2xl lg:py-3xl">
+        <div className="mx-auto max-w-5xl px-base lg:px-lg">
+        <SectionHeading
+          eyebrow="Build vs. buy"
+          title="Enterprise token compression beats ad hoc scripts"
+          description="The compression creates the savings. Wisp makes that compression reliable across enterprise compute, device management, policy, telemetry, and billing."
+          align="center"
+          className="mb-2xl"
+        />
+        <div className="grid gap-lg md:grid-cols-2">
+          <div className="rounded-xl border border-border bg-surface p-lg">
+            <p className="text-caption font-medium uppercase tracking-widest text-text-tertiary">
+              Ad hoc compression
+            </p>
+            <ul className="mt-lg space-y-md">
+              {comparison.map((row) => (
+                <li key={row.dim} className="flex items-start gap-sm text-callout text-text-secondary">
+                  <X size={16} className="mt-0.5 shrink-0 text-text-tertiary" aria-hidden="true" />
+                  <span>
+                    <span className="text-text-primary">{row.dim}:</span> {row.diy}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="rounded-xl border border-accent/40 bg-surface p-lg ring-1 ring-accent/20">
+            <p className="text-caption font-medium uppercase tracking-widest text-accent">Managed by Wisp</p>
+            <ul className="mt-lg space-y-md">
+              {comparison.map((row) => (
+                <li key={row.dim} className="flex items-start gap-sm text-callout text-text-secondary">
+                  <Check size={16} className="mt-0.5 shrink-0 text-success" aria-hidden="true" />
+                  <span>
+                    <span className="text-text-primary">{row.dim}:</span> {row.wisp}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+        </div>
+      </section>
+
       {/* Pricing */}
       <section id="pricing" className="mx-auto max-w-5xl px-base py-2xl lg:px-lg lg:py-3xl">
         <SectionHeading
-          eyebrow="Pricing"
-          title="Pay when you save — not per seat"
-          description="Start in shadow mode: see the meter, trust the math, then flip billing on when you're ready."
+          eyebrow="No-brainer pricing"
+          title="Pay from compression savings — not seats"
+          description="Start in shadow mode, prove token reduction against real usage, then pay Wisp a capped share of the net savings it creates."
           align="center"
           className="mb-2xl"
         />
@@ -270,7 +368,7 @@ export default function MarketingPage() {
             id="enterprise"
             className="relative flex flex-col overflow-hidden rounded-xl border border-accent/40 bg-surface p-lg ring-1 ring-accent/20 lg:p-xl"
           >
-            <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-accent/10 blur-3xl" />
+            <div className="pointer-events-none absolute -top-16 right-0 h-48 w-48 rounded-full bg-accent/10 blur-3xl sm:-right-16" />
             <p className="text-caption font-medium uppercase tracking-widest text-accent">Enterprise</p>
             <p className="mt-sm text-headline font-semibold text-text-primary">
               Custom take rate &amp; monthly cap

@@ -2,26 +2,26 @@
 
 > Invisible intelligence. Visible savings.
 
-Wisp is an enterprise efficiency layer that cuts AI coding token costs across a developer fleet. It is a governance-and-billing wrapper around the open-source [Headroom](https://github.com/chopratejas/headroom) compression engine (Apache 2.0). **The compression is commodity. The wrapper is the product.**
+Wisp is an enterprise efficiency layer that cuts AI coding token costs across a developer fleet. It wraps a high-ratio context-compression engine with governance, fleet distribution, and audited billing. **The compression is commodity. The wrapper is the product.**
 
 ## Monorepo layout
 
 | Path | What |
 |------|------|
-| `agent/` | Python endpoint agent that supervises a pinned Headroom proxy, applies MDM policy, and emits PII-free telemetry. |
+| `agent/` | Python endpoint agent that supervises a pinned compression proxy, applies MDM policy, and emits PII-free telemetry. |
 | `agent-ui-macos/` | SwiftUI menu-bar app — glanceable, read-only on-device savings. |
 | `saas/` | Next.js (App Router) control plane: fleet dashboard, savings, policy, billing, telemetry/enrol/Stripe APIs. |
 | `supabase/` | Postgres schema + RLS migrations and the `model_pricing` rate-card seed. |
 | `design/` | Shared design system: tokens, principles, review checklist (Apple-inspired). |
-| `evals/` | Compression-quality regression gate that runs on every Headroom version bump. |
+| `evals/` | Compression-quality regression gate that runs on every compression-engine version bump. |
 | `packaging/` | macOS PKG (Jamf-ready) first; Windows/Intune fast-follow. |
 
 ## Prime directives
-1. **Depend on Headroom, never fork it** — pinned `headroom-ai`, eval-gated bumps.
+1. **Depend on the pinned engine, never fork it** — eval-gated version bumps.
 2. **Telemetry is aggregate and PII-free, always** — counts only, never content.
 3. **Bill on measured tokens removed, net of provider cache discounts** — never counterfactuals.
 4. **The meter must be deterministically reproducible** — inspectable agent.
-5. **Preserve Apache 2.0 attribution** — `licenses/headroom-NOTICE` ships in every artifact.
+5. **Preserve third-party attribution** — bundled-engine license notices ship in every artifact (`licenses/`).
 6. **White-label freely, lead with the wrapper.**
 7. **Only cover billable, cleanly-interceptable traffic** (base-URL redirection; no desktop-app MITM).
 
@@ -70,4 +70,4 @@ Database changes live in `supabase/migrations/` — apply with `scripts/apply_su
 Production-shaped: auth, multi-tenant RLS (CI-tested), live fleet/savings/billing reads, deterministic net-of-cache meter, idempotent telemetry + Stripe meter events, scheduled billing rollup, MDM enrol script (`packaging/mdm/enrol_device.sh`), unsigned PKG + ad-hoc menu-bar app, and marketing site at `/`. Remaining before GA: Apple sign/notarize, MDM pilot validation on real devices, Stripe + SMTP + Sentry go-live. See `docs/HANDOFFS.md`.
 
 ## License
-Wisp application code: proprietary. Bundled Headroom dependency: Apache 2.0 (see `licenses/headroom-NOTICE`).
+Wisp application code: proprietary. Bundled third-party components are used under their respective licenses (see `licenses/`).
