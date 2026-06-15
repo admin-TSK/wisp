@@ -1,0 +1,9 @@
+#!/bin/bash
+set -e
+mkdir -p "/Library/Application Support/Wisp" /var/log/wisp /var/lib/wisp
+if [[ ! -f "/Library/Application Support/Wisp/profile.json" ]]; then
+  cp /etc/wisp/profile.template.json "/Library/Application Support/Wisp/profile.json"
+  chmod 600 "/Library/Application Support/Wisp/profile.json"
+fi
+launchctl bootstrap system /Library/LaunchDaemons/com.wisp.agent.plist 2>/dev/null || \
+  launchctl load /Library/LaunchDaemons/com.wisp.agent.plist 2>/dev/null || true

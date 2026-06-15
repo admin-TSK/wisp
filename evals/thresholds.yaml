@@ -1,0 +1,23 @@
+# Compression-quality regression gate. A Headroom version bump must keep every
+# corpus item within these bounds or the PR is flagged for human review.
+# min/max compression ratio (tokens_saved / tokens_before) per content type.
+#
+# Calibrated against headroom-ai==0.25.0: recent code is accuracy-protected
+# (ratio ~0); logs/json crush aggressively; verbose CLI output compresses modestly.
+
+defaults:
+  retrieval_correctness_required: true
+
+content_types:
+  logs:
+    min_ratio: 0.70
+    max_ratio: 0.98
+  json:
+    min_ratio: 0.45
+    max_ratio: 0.97
+  code:
+    min_ratio: 0.00
+    max_ratio: 0.10
+  tool_output:
+    min_ratio: 0.15
+    max_ratio: 0.96

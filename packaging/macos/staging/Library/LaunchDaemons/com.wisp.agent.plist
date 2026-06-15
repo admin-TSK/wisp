@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.wisp.agent</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/local/wisp/venv/bin/wisp-agent</string>
+  </array>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>StandardOutPath</key><string>/var/log/wisp/agent.log</string>
+  <key>StandardErrorPath</key><string>/var/log/wisp/agent.err</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>WISP_CONFIG_PROFILE</key>
+    <string>/Library/Application Support/Wisp/profile.json</string>
+    <key>WISP_LOG_FILE</key>
+    <string>/var/log/wisp/headroom.jsonl</string>
+  </dict>
+</dict>
+</plist>

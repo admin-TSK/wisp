@@ -1,0 +1,6 @@
+{
+  "content_type": "logs",
+  "description": "Repetitive request log with a single Python traceback; the compressor must preserve the exception line.",
+  "must_preserve": ["KeyError"],
+  "content": "INFO 127.0.0.1 GET /readyz 200 1ms\nINFO 127.0.0.1 GET /readyz 200 1ms\nINFO 127.0.0.1 GET /readyz 200 1ms\nINFO 127.0.0.1 POST /api/telemetry 200 12ms\nINFO 127.0.0.1 GET /readyz 200 1ms\nINFO 127.0.0.1 GET /readyz 200 1ms\nERROR flush failed for window 2026-06-15T09:00:00Z\nTraceback (most recent call last):\n  File \"/usr/local/wisp/venv/lib/python3.13/site-packages/wisp_agent/__main__.py\", line 120, in _flush_pending\n    flush(batch, endpoint=cfg.saas_endpoint, enrolment_token=cfg.enrolment_token)\n  File \"/usr/local/wisp/venv/lib/python3.13/site-packages/wisp_agent/telemetry.py\", line 110, in flush\n    data = json.dumps(serialize(batch)).encode(\"utf-8\")\nKeyError: 'model'\nINFO 127.0.0.1 GET /readyz 200 1ms\nINFO 127.0.0.1 GET /readyz 200 1ms\nINFO 127.0.0.1 GET /readyz 200 1ms"
+}

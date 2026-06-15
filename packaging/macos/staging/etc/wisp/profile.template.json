@@ -1,0 +1,8 @@
+{
+  "_note": "Run packaging/mdm/enrol_device.sh after PKG install. See packaging/mdm/jamf/README.md.",
+  "tenancy_id": "",
+  "device_id": "",
+  "saas_endpoint": "",
+  "enrolment_token": "",
+  "policy_level": "aggressive"
+}

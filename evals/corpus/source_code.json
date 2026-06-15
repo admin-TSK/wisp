@@ -1,0 +1,5 @@
+{
+  "content_type": "code",
+  "description": "Source code; AST-aware compressor should keep signatures, collapse bodies.",
+  "content": "def resolve_rate(model, rate_card, overrides):\n    \"\"\"Resolve the effective per-token rate for a model.\"\"\"\n    if model in overrides:\n        base = overrides[model].get('base')\n        cached = overrides[model].get('cached')\n        if base is not None:\n            return base, (cached if cached is not None else base)\n    row = rate_card.get(model)\n    if row is None:\n        raise KeyError(f'no rate for {model}')\n    return row.base_input_rate, row.cached_input_rate\n\n\ndef blended(base, cached, hit_ratio):\n    h = min(max(hit_ratio, 0.0), 1.0)\n    return cached * h + base * (1.0 - h)\n"
+}

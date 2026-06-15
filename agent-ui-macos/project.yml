@@ -1,0 +1,25 @@
+name: WispMenuBar
+options:
+  bundleIdPrefix: com.wisp
+  deploymentTarget:
+    macOS: "13.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    PRODUCT_NAME: WispMenuBar
+    MARKETING_VERSION: 0.1.0
+    CURRENT_PROJECT_VERSION: 1
+    SWIFT_VERSION: "5.9"
+    CODE_SIGN_IDENTITY: "-"
+targets:
+  WispMenuBar:
+    type: application
+    platform: macOS
+    sources:
+      - path: WispMenuBar
+    settings:
+      base:
+        INFOPLIST_KEY_LSUIElement: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.wisp.menubar
+        GENERATE_INFOPLIST_FILE: YES
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks"

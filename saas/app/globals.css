@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Tokens from design/tokens.json. Light is default; .dark flips them.
+   Status is never communicated by color alone (see components for paired text/icons). */
+:root {
+  --accent: #0a84ff;
+  --accent-hover: #0060df;
+  --success: #1e8e3e;
+  --warning: #b25e00;
+  --destructive: #d70015;
+  --bg: #ffffff;
+  --bg-elevated: #f5f5f7;
+  --surface: #ffffff;
+  --border: #d2d2d7;
+  --text-primary: #1d1d1f;
+  --text-secondary: #6e6e73;
+  --text-tertiary: #8e8e93;
+}
+
+.dark {
+  --accent: #0a84ff;
+  --accent-hover: #409cff;
+  --success: #30d158;
+  --warning: #ff9f0a;
+  --destructive: #ff453a;
+  --bg: #000000;
+  --bg-elevated: #1c1c1e;
+  --surface: #161618;
+  --border: #38383a;
+  --text-primary: #f5f5f7;
+  --text-secondary: #aeaeb2;
+  --text-tertiary: #8e8e93;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* Offset anchored sections below the sticky header + announcement bar. */
+  scroll-padding-top: 5.5rem;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Respect Reduce Motion (guideline 8, 9). */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* Visible, logical focus states (guideline 9). */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Subtle grid for marketing hero backgrounds */
+.marketing-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+}

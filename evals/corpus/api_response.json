@@ -1,0 +1,14 @@
+{
+  "content_type": "json",
+  "description": "Repetitive JSON array of records; high compression expected via statistical sampling.",
+  "content": [
+    { "id": 1, "status": "ok", "region": "us-east-1", "latency_ms": 51 },
+    { "id": 2, "status": "ok", "region": "us-east-1", "latency_ms": 49 },
+    { "id": 3, "status": "ok", "region": "us-east-1", "latency_ms": 52 },
+    { "id": 4, "status": "ok", "region": "us-east-1", "latency_ms": 50 },
+    { "id": 5, "status": "error", "region": "us-east-1", "latency_ms": 4210 },
+    { "id": 6, "status": "ok", "region": "us-east-1", "latency_ms": 48 },
+    { "id": 7, "status": "ok", "region": "us-east-1", "latency_ms": 53 },
+    { "id": 8, "status": "ok", "region": "us-east-1", "latency_ms": 47 }
+  ]
+}

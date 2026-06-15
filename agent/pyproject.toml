@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wisp-agent"
+version = "0.1.0"
+description = "Wisp endpoint agent: supervises a pinned Headroom proxy, applies MDM policy, emits PII-free telemetry."
+requires-python = ">=3.10,<3.14"
+license = { text = "Proprietary" }
+dependencies = [
+  # Pinned compression engine. Depend, never fork. Bumps are eval-gated (see evals/).
+  "headroom-ai[proxy]==0.25.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+  "ruff>=0.6",
+]
+
+[project.scripts]
+wisp-agent = "wisp_agent.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["wisp_agent*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"

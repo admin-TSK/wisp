@@ -1,0 +1,15 @@
+{
+  "content_type": "json",
+  "description": "Repetitive rate-card style JSON; high compression expected, but the outlier rate must survive.",
+  "must_preserve": ["claude-fable-5"],
+  "content": [
+    { "model": "gpt-5", "base": 1.25, "cached": 1.25, "provider": "openai" },
+    { "model": "gpt-5-mini", "base": 0.25, "cached": 0.25, "provider": "openai" },
+    { "model": "gpt-5.4", "base": 2.5, "cached": 0.25, "provider": "openai" },
+    { "model": "claude-sonnet-4-6", "base": 3.0, "cached": 0.3, "provider": "anthropic" },
+    { "model": "claude-haiku-4-5", "base": 1.0, "cached": 0.1, "provider": "anthropic" },
+    { "model": "claude-fable-5", "base": 10.0, "cached": 1.0, "provider": "anthropic" },
+    { "model": "gemini-3.1-pro", "base": 2.0, "cached": 2.0, "provider": "google" },
+    { "model": "grok-4", "base": 3.0, "cached": 3.0, "provider": "xai" }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "headroom_version": "0.25.0",
+  "captured_at": "2026-06-15",
+  "endpoints": {
+    "/health": {
+      "status": "healthy",
+      "ready": true,
+      "version": "0.25.0",
+      "checks": { "startup": {}, "http_client": {}, "cache": {}, "rate_limiter": {} }
+    },
+    "/readyz": {
+      "status": "healthy",
+      "ready": true,
+      "version": "0.25.0"
+    },
+    "/stats": {
+      "summary": { "mode": "token", "api_requests": 0 },
+      "tokens": { "input": 0, "output": 0, "saved": 0 },
+      "requests": { "total": 0, "by_model": {} },
+      "cache": { "total_hits": 0 }
+    },
+    "/stats-history": {
+      "schema_version": 2,
+      "lifetime": { "requests": 0, "tokens_saved": 0 },
+      "history": [],
+      "series": { "hourly": [], "daily": [], "weekly": [], "monthly": [] }
+    },
+    "/metrics": "prometheus text; counters include headroom_tokens_input_total, headroom_tokens_saved_total, headroom_requests_by_model"
+  },
+  "jsonl_log_line": {
+    "request_id": "hr_…",
+    "timestamp": "ISO8601",
+    "provider": "openai",
+    "model": "gpt-4o-mini",
+    "input_tokens_original": 8,
+    "input_tokens_optimized": 8,
+    "output_tokens": 0,
+    "tokens_saved": 0,
+    "cache_hit": false,
+    "transforms_applied": [],
+    "turn_id": "…"
+  },
+  "billing_note": "cache_read token counts are not per-request in 0.25.0; Wisp reports input_tokens_cache_read=0 until observable."
+}

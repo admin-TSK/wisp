@@ -1,0 +1,5 @@
+{
+  "content_type": "tool_output",
+  "description": "Verbose CLI/tool output with mostly boilerplate around a few useful lines.",
+  "content": "$ wisp-agent status\nWisp agent v0.1.0\nReading config profile ... ok\nResolving tenancy ... ok\nProxy supervisor: starting headroom on :8787\nProxy supervisor: health check 1/45 ...\nProxy supervisor: health check 2/45 ...\nProxy supervisor: health check 3/45 ... ready\nPolicy: aggressive (HEADROOM_MODE=aggressive, MIN=0)\nLocal stats: serving on 127.0.0.1:8788\nLast window: 42 requests, 1,875,300 -> 562,590 input tokens (70.0% removed)\nCache reads observed: 120,400 tokens\nTelemetry: flushed batch, server accepted 1 event\nNext flush in 300s"
+}

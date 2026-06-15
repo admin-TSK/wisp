@@ -1,0 +1,6 @@
+{
+  "content_type": "logs",
+  "description": "Build/test log with one buried failure; compressor must preserve the FATAL line.",
+  "must_preserve": ["FATAL"],
+  "content": "INFO  building module auth\nINFO  building module billing\nINFO  building module fleet\nINFO  resolving 412 dependencies\nINFO  cache hit for 401 dependencies\nINFO  compiling 1124 files\nINFO  compiling 1124 files\nINFO  compiling 1124 files\nWARN  deprecated API use in telemetry.py:42\nINFO  running 318 tests\nINFO  test suite auth ... ok\nINFO  test suite billing ... ok\nFATAL test suite fleet ... segmentation fault in proxy_supervisor at pid 8123\nINFO  teardown complete\nINFO  teardown complete\nINFO  uploading artifacts\nINFO  done"
+}

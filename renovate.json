@@ -1,0 +1,19 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "description": "Headroom is the pinned compression engine. Bumps must pass the eval gate before merge; never auto-merge.",
+      "matchPackageNames": ["headroom-ai"],
+      "matchManagers": ["pip_requirements", "pep621", "npm"],
+      "groupName": "headroom engine",
+      "automerge": false,
+      "addLabels": ["headroom-bump", "eval-gate-required"],
+      "schedule": ["at any time"],
+      "prBodyNotes": [
+        "This PR bumps the pinned Headroom engine. CI runs evals/run_evals.py against the new version. Do not merge while the eval gate is red."
+      ]
+    }
+  ]
+}

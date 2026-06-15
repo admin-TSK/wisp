@@ -1,0 +1,6 @@
+{
+  "content_type": "tool_output",
+  "description": "Verbose ripgrep output across a repo; compressor should keep the matching paths/lines while crushing the noise.",
+  "must_preserve": ["TODO(security)"],
+  "content": "src/app/page.tsx:12:  // render dashboard\nsrc/app/layout.tsx:4:  import Header\nsrc/lib/queries.ts:88:  const { data } = await supabase\nsrc/lib/queries.ts:142:  return rows\nsrc/lib/billing/rollup.ts:45:  const admin = createAdminClient()\nsrc/lib/billing/stripe.ts:73:  // TODO(security): verify webhook signature on the raw body\nsrc/lib/billing/net-of-cache.ts:30:  return rate.cachedInputRate * h + rate.baseInputRate * (1 - h)\nsrc/components/ui/button.tsx:18:  export const Button = forwardRef\nsrc/components/ui/card.tsx:6:  export function Card\nsrc/middleware.ts:3:  return updateSession(request)\ntests/billing.test.ts:14:  it('nets out cache', () => {\ntests/billing.test.ts:22:  expect(netSavings(w, rate)).toBeCloseTo(1.65)"
+}

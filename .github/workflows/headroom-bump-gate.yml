@@ -1,0 +1,31 @@
+name: Headroom Bump Gate
+
+# Runs the compression-quality eval suite whenever a PR touches the pinned
+# headroom-ai version (Renovate labels these "headroom-bump"). Green => the bump
+# is a safe, reviewed version change. Red => flagged for human review; do not merge.
+
+on:
+  pull_request:
+    paths:
+      - "agent/pyproject.toml"
+      - "evals/**"
+
+jobs:
+  eval-gate:
+    name: Compression eval gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned Headroom from agent
+        run: pip install "$(python - <<'PY'
+import re, pathlib
+text = pathlib.Path("agent/pyproject.toml").read_text()
+m = re.search(r'"(headroom-ai==[^"]+)"', text)
+print(m.group(1) if m else "headroom-ai")
+PY
+)" pyyaml
+      - name: Run eval gate
+        run: python evals/run_evals.py
