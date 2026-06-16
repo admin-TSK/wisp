@@ -21,7 +21,11 @@ insert into tenants (id, name) values
 insert into tenant_members (tenant_id, user_id, role) values
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '11111111-1111-4111-8111-111111111111', 'owner'),
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '22222222-2222-4222-8222-222222222222', 'viewer'),
+  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '55555555-5555-4555-8555-555555555555', 'admin'),
   ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', '33333333-3333-4333-8333-333333333333', 'owner');
+
+insert into devices (id, tenant_id, enrolment_label) values
+  ('dddddddd-dddd-4ddd-8ddd-dddddddddddd', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'device-a');
 
 insert into policies (tenant_id, scope, level) values
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'tenant', 'aggressive');
@@ -82,6 +86,43 @@ do $$ begin
     then raise exception 'C6 failed: enrol_secrets readable by authenticated'; end if;
 end $$;
 
+-- C7: viewer of A cannot create invites (owner/admin only).
+do $$
+declare denied boolean := false;
+begin
+  begin
+    insert into invites (tenant_id, email, role, token_hash, invited_by, expires_at)
+      values (
+        'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+        'x@example.com',
+        'viewer',
+        'abc',
+        '22222222-2222-4222-8222-222222222222',
+        now() + interval '7 days'
+      );
+  exception when others then denied := true;
+  end;
+  if not denied then raise exception 'C7 failed: viewer was able to write invites'; end if;
+end $$;
+
+-- C8: enrolment_tokens is deny-all to authenticated.
+do $$ begin
+  if (select count(*) from enrolment_tokens) <> 0
+    then raise exception 'C8 failed: enrolment_tokens readable by authenticated'; end if;
+end $$;
+
+-- C9: cross-tenant isolation — member of B cannot read A's devices.
+set local request.jwt.claims to '{"sub":"33333333-3333-4333-8333-333333333333"}';
+do $$ begin
+  if (select count(*) from devices where tenant_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa') <> 0
+    then raise exception 'C9 failed: cross-tenant device read leaked'; end if;
+end $$;
+
+-- C10: admin of A can write policy.
+set local request.jwt.claims to '{"sub":"55555555-5555-4555-8555-555555555555"}';
+insert into policies (tenant_id, scope, level)
+  values ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'group', 'conservative');
+
 rollback;
 
-\echo 'RLS checks passed (C1-C6).'
+\echo 'RLS checks passed (C1-C10).'

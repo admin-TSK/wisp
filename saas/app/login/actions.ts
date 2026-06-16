@@ -2,12 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-
-function safeNext(next: FormDataEntryValue | null): string {
-  const n = typeof next === "string" ? next : "/";
-  // Only allow same-origin relative paths.
-  return n.startsWith("/") && !n.startsWith("//") ? n : "/app";
-}
+import { safeNext } from "@/lib/auth";
 
 export async function signIn(formData: FormData) {
   const supabase = await createClient();
@@ -18,7 +13,7 @@ export async function signIn(formData: FormData) {
   if (error) {
     redirect(`/login?error=${encodeURIComponent(error.message)}`);
   }
-  redirect(safeNext(formData.get("next")));
+  redirect(safeNext(String(formData.get("next") ?? "")));
 }
 
 export async function signUp(formData: FormData) {

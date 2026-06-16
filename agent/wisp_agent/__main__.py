@@ -11,6 +11,8 @@ across a process restart.
 
 from __future__ import annotations
 
+import logging
+import sys
 import threading
 import time
 from datetime import datetime, timezone
@@ -31,9 +33,14 @@ from .telemetry import UsageBatch, UsageEvent, flush
 
 HEADROOM_VERSION = "0.25.0"  # kept in lockstep with the pin in pyproject.toml
 
+log = logging.getLogger("wisp_agent")
+
 
 def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    # RFC 3339 with a 'Z' suffix (UTC). isoformat() yields a '+00:00' offset;
+    # we normalize to 'Z' so timestamps match JS toISOString() and the SaaS
+    # telemetry contract exactly (see saas/lib/telemetry-contract.ts).
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
 def _safe_read_window(cfg: AgentConfig, offset: int) -> tuple[list[ModelStats], int]:
@@ -89,6 +96,15 @@ def _build_batch(cfg: AgentConfig, stats: list[ModelStats], pending: PendingBatc
     )
 
 
+def _skip_unmeterable_range(cfg: AgentConfig, state: MeteringState, end: int) -> None:
+    """Advance past bytes that produced no aggregatable stats."""
+    state.committed_offset = end
+    if state.pending:
+        state.window_start = state.pending.window_end
+        state.pending = None
+    save_state(cfg.state_file, state)
+
+
 def _flush_pending(cfg: AgentConfig, state: MeteringState) -> bool:
     """(Re)build and flush the pending batch. On success, commit and clear it.
 
@@ -96,15 +112,42 @@ def _flush_pending(cfg: AgentConfig, state: MeteringState) -> bool:
     should be retried next cycle.
     """
     assert state.pending is not None
-    stats = _safe_read_range(cfg, state.committed_offset, state.pending.to_offset)
-    batch = _build_batch(cfg, stats, state.pending)
-    try:
-        flush(batch, endpoint=cfg.saas_endpoint, enrolment_token=cfg.enrolment_token)
-    except Exception:  # noqa: BLE001 -- keep pending; identical retry next cycle
+    start = state.committed_offset
+    end = state.pending.to_offset
+    stats = _safe_read_range(cfg, start, end)
+
+    if end > start and not stats:
+        # Distinguish transient read failure from unmeterable content.
+        try:
+            stats, _ = read_log_stats(cfg.log_file, offset=start, end=end)
+        except Exception:  # noqa: BLE001
+            return False
+        if not stats:
+            log.warning(
+                "Skipping unmeterable log range [%d, %d) batch_id=%s",
+                start,
+                end,
+                state.pending.batch_id,
+            )
+            _skip_unmeterable_range(cfg, state, end)
+            return True
         return False
 
-    # Confirmed ingested: advance the durable offset and close the window.
-    state.committed_offset = state.pending.to_offset
+    batch = _build_batch(cfg, stats, state.pending)
+    try:
+        status = flush(batch, endpoint=cfg.saas_endpoint, enrolment_token=cfg.enrolment_token)
+    except Exception as exc:  # noqa: BLE001 -- keep pending; identical retry next cycle
+        log.warning("Telemetry flush failed batch_id=%s: %s", batch.batch_id, exc)
+        return False
+
+    if status >= 400:
+        log.warning("Telemetry flush rejected batch_id=%s status=%s", batch.batch_id, status)
+        if status in (401, 403, 422):
+            state.pending = None
+            save_state(cfg.state_file, state)
+        return False
+
+    state.committed_offset = end
     state.window_start = state.pending.window_end
     state.pending = None
     save_state(cfg.state_file, state)
@@ -112,9 +155,11 @@ def _flush_pending(cfg: AgentConfig, state: MeteringState) -> bool:
 
 
 def run(cfg: AgentConfig) -> None:
+    logging.basicConfig(level=logging.INFO, stream=sys.stderr)
     supervisor = ProxySupervisor(cfg.proxy_port, cfg.policy_level, cfg.log_file)
     supervisor.start()
-    supervisor.wait_ready()
+    if not supervisor.wait_ready():
+        log.error("Compression proxy did not become ready — metering may be incomplete")
 
     def snapshot() -> GlanceSnapshot:
         return compute_glance(
@@ -135,14 +180,17 @@ def run(cfg: AgentConfig) -> None:
         time.sleep(cfg.flush_interval_s)
         supervisor.ensure_running()
 
-        # Resume an in-flight batch first (e.g. after a prior failed flush or a
-        # restart) so its identity is preserved before we read any new data.
         if state.pending is not None:
             if not _flush_pending(cfg, state):
                 continue
 
         stats, new_offset = _safe_read_window(cfg, state.committed_offset)
-        if not stats or new_offset <= state.committed_offset:
+        if new_offset <= state.committed_offset:
+            continue
+        if not stats:
+            log.debug("Advancing past unmeterable bytes %d -> %d", state.committed_offset, new_offset)
+            state.committed_offset = new_offset
+            save_state(cfg.state_file, state)
             continue
 
         state.pending = PendingBatch(
@@ -151,7 +199,7 @@ def run(cfg: AgentConfig) -> None:
             window_end=_now_iso(),
             to_offset=new_offset,
         )
-        save_state(cfg.state_file, state)  # durable BEFORE the network call
+        save_state(cfg.state_file, state)
         _flush_pending(cfg, state)
 
 

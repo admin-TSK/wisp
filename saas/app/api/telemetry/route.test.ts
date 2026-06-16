@@ -97,4 +97,28 @@ describe("POST /api/telemetry", () => {
     expect(rows.every((r: { device_id: string }) => r.device_id === "DEV")).toBe(true);
     expect(opts).toMatchObject({ onConflict: "batch_id,model", ignoreDuplicates: true });
   });
+
+  // Regression: the Python agent stamps windows with datetime.isoformat(), which
+  // emits a +00:00 offset (not 'Z'). The default z.string().datetime() rejected
+  // that, 422-ing every real batch while this suite stayed green on a hand-coded
+  // 'Z' fixture. These lock the accepted shapes to what the agent actually sends.
+  it.each([
+    ["agent isoformat offset", "2026-06-15T09:00:00.123456+00:00"],
+    ["normalized Z + micros", "2026-06-15T09:00:00.123456Z"],
+    ["no fractional seconds", "2026-06-15T09:00:00Z"],
+  ])("accepts a real agent timestamp: %s", async (_label, ts) => {
+    const { POST } = await import("./route");
+    const res = await POST(makeReq({ ...validBatch(), window_start: ts, window_end: ts }));
+    expect(res.status).toBe(200);
+    expect(upsertSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("still rejects a zone-less (naive) timestamp", async () => {
+    const { POST } = await import("./route");
+    const res = await POST(
+      makeReq({ ...validBatch(), window_start: "2026-06-15T09:00:00", window_end: "2026-06-15T09:00:00" }),
+    );
+    expect(res.status).toBe(422);
+    expect(upsertSpy).not.toHaveBeenCalled();
+  });
 });

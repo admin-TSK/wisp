@@ -36,17 +36,45 @@ class MeteringState:
     pending: PendingBatch | None = None
 
 
+def _parse_pending(raw: object) -> PendingBatch | None:
+    if not isinstance(raw, dict):
+        return None
+    try:
+        return PendingBatch(
+            batch_id=str(raw["batch_id"]),
+            window_start=str(raw["window_start"]),
+            window_end=str(raw["window_end"]),
+            to_offset=int(raw["to_offset"]),
+        )
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
 def load_state(path: Path) -> MeteringState:
     """Load state, returning a fresh one if the file is missing or unreadable."""
+    p = Path(path)
     try:
-        raw = json.loads(Path(path).read_text())
+        raw = json.loads(p.read_text())
     except (FileNotFoundError, json.JSONDecodeError, OSError, UnicodeDecodeError):
         return MeteringState()
-    pending = raw.get("pending")
+
+    pending = _parse_pending(raw.get("pending"))
+    if raw.get("pending") and pending is None:
+        # Corrupt pending block — quarantine and continue from committed offset.
+        try:
+            p.rename(p.with_suffix(p.suffix + ".corrupt"))
+        except OSError:
+            pass
+        return MeteringState(
+            committed_offset=int(raw.get("committed_offset") or 0),
+            window_start=raw.get("window_start"),
+            pending=None,
+        )
+
     return MeteringState(
         committed_offset=int(raw.get("committed_offset") or 0),
         window_start=raw.get("window_start"),
-        pending=PendingBatch(**pending) if pending else None,
+        pending=pending,
     )
 
 

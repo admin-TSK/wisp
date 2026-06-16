@@ -92,3 +92,17 @@ Set `NEXT_PUBLIC_SITE_URL` to your production SaaS URL so redirect links are cor
 | `WISP_SENTRY_DSN` | handoff | observability |
 
 Cron: `vercel.json` registers `0 2 * * *` → `/api/cron/rollup` with `Authorization: Bearer $WISP_CRON_SECRET`.
+
+---
+
+## Demo workspace (Join Demo)
+
+Onboarding **Join Demo** requires a pre-seeded tenant UUID in `WISP_DEMO_TENANT_ID`.
+
+1. Create a tenant in Supabase (or via SaaS onboarding) and note its UUID.
+2. Seed sample data: devices, `usage_events`, `billing_config`, and an active `enrol_secrets` row (Fleet → Rotate enrol secret, or insert `secret_hash` via service role).
+3. Set `WISP_DEMO_TENANT_ID=<uuid>` in Vercel and local `.env.local`. Store the demo workspace enrol plaintext in Vercel as `WISP_DEMO_ENROL_SECRET` (ops/MDM only — not read by the app).
+4. New users who click **Join Demo** are added as viewers and switched to that workspace via the workspace cookie.
+
+Apply all migrations (`supabase/migrations/0001`–`0008`) before seeding. CI runs migrations + `supabase/seed.sql` (model pricing only); demo tenant is environment-specific.
+

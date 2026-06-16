@@ -8,8 +8,8 @@ export function MarketingFooter() {
         <div className="md:col-span-2">
           <Logo href="/" size="sm" />
           <p className="mt-md max-w-sm text-callout leading-relaxed text-text-secondary">
-            Enterprise token compression for lower LLM bills. Deploy across the fleet, remove
-            costly input context, and pay from measured net savings.
+            Enterprise token compression for lower LLM bills. Deploy across your fleet and pay only
+            from the savings we measure.
           </p>
         </div>
         <div>

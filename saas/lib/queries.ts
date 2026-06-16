@@ -2,10 +2,50 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { RATE_CARD } from "@/lib/billing/rate-card";
 import { summarize, type ModelRate, type UsageWindow } from "@/lib/billing/net-of-cache";
+import { getActiveTenantCookie } from "@/lib/tenant-session";
 
 export interface TenantContext {
   tenantId: string;
   role: string;
+}
+
+export interface WorkspaceOption {
+  tenantId: string;
+  name: string;
+  role: string;
+}
+
+const ROLE_RANK: Record<string, number> = { owner: 0, admin: 1, viewer: 2 };
+
+function pickTenant(
+  memberships: { tenant_id: string; role: string }[],
+  preferredId?: string,
+): TenantContext | null {
+  if (!memberships.length) return null;
+  if (preferredId) {
+    const match = memberships.find((m) => m.tenant_id === preferredId);
+    if (match) return { tenantId: match.tenant_id, role: match.role };
+  }
+  const sorted = [...memberships].sort(
+    (a, b) => (ROLE_RANK[a.role] ?? 99) - (ROLE_RANK[b.role] ?? 99),
+  );
+  return { tenantId: sorted[0].tenant_id, role: sorted[0].role };
+}
+
+export async function getUserWorkspaces(userId: string): Promise<WorkspaceOption[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("tenant_members")
+    .select("tenant_id, role, tenants(name)")
+    .eq("user_id", userId);
+
+  return (data ?? [])
+    .map((row) => ({
+      tenantId: row.tenant_id,
+      role: row.role,
+      name: (row.tenants as { name: string } | null)?.name ?? "Workspace",
+    }))
+    .sort((a, b) => (ROLE_RANK[a.role] ?? 99) - (ROLE_RANK[b.role] ?? 99));
 }
 
 export async function getTenantContext(): Promise<TenantContext | null> {
@@ -15,14 +55,13 @@ export async function getTenantContext(): Promise<TenantContext | null> {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data } = await supabase
+  const { data: memberships } = await supabase
     .from("tenant_members")
     .select("tenant_id, role")
-    .eq("user_id", user.id)
-    .limit(1)
-    .maybeSingle();
+    .eq("user_id", user.id);
 
-  return data ? { tenantId: data.tenant_id, role: data.role } : null;
+  const preferred = await getActiveTenantCookie();
+  return pickTenant(memberships ?? [], preferred);
 }
 
 /** Resolve $/token rates: tenant override (pricing_config) else global model_pricing else card. */
@@ -66,7 +105,17 @@ export interface SavingsByModel {
 
 export async function getSavings(tenantId: string) {
   const supabase = await createClient();
-  const rates = await resolveRates(tenantId);
+  const [rates, { data: cfg }] = await Promise.all([
+    resolveRates(tenantId),
+    supabase
+      .from("billing_config")
+      .select("take_rate, monthly_cap")
+      .eq("tenant_id", tenantId)
+      .maybeSingle(),
+  ]);
+
+  const takeRate = Number(cfg?.take_rate ?? 0.1);
+  const monthlyCap = cfg?.monthly_cap ?? undefined;
 
   const { data: events } = await supabase
     .from("usage_events")
@@ -97,8 +146,8 @@ export async function getSavings(tenantId: string) {
     })
     .sort((a, b) => b.net - a.net);
 
-  const totals = windows.length ? summarize(windows, rates, 0.1) : null;
-  return { byModel, totals };
+  const totals = windows.length ? summarize(windows, rates, takeRate, monthlyCap ?? undefined) : null;
+  return { byModel, totals, takeRate };
 }
 
 export interface DeviceRow {
@@ -136,7 +185,6 @@ export async function getMembers(tenantId: string): Promise<MemberRow[]> {
     .eq("tenant_id", tenantId)
     .order("role", { ascending: true });
 
-  // Emails live in auth.users — resolve via admin for display.
   const admin = (await import("@/lib/supabase/admin")).createAdminClient();
   const out: MemberRow[] = [];
   for (const row of rows ?? []) {

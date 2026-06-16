@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { getTenantContext, getFleet } from "@/lib/queries";
+import { consumeFlash } from "@/lib/tenant-session";
 import { rotateEnrolSecret } from "./actions";
 
 function relativeTime(iso: string | null): string {
@@ -19,11 +20,13 @@ function relativeTime(iso: string | null): string {
 export default async function FleetPage({
   searchParams,
 }: {
-  searchParams: Promise<{ enrol_secret?: string; error?: string }>;
+  searchParams: Promise<{ error?: string }>;
 }) {
   const ctx = await getTenantContext();
   const devices = ctx ? await getFleet(ctx.tenantId) : [];
-  const { enrol_secret, error } = await searchParams;
+  const { error } = await searchParams;
+  const flash = await consumeFlash();
+  const enrol_secret = flash?.enrol_secret;
   const canManage = Boolean(ctx && ctx.role !== "viewer");
 
   return (

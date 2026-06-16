@@ -75,9 +75,9 @@ async function ensureMeteredSubscription(stripe: Stripe, customerId: string): Pr
  * Report the period fee to Stripe as additive Billing Meter events.
  *
  * Meter events are summed over the billing period, so we report only the DELTA
- * since the last report (tracked in billing_periods.reported_fee). That makes
- * the daily rollup idempotent: re-running it never double-charges, and a fee
- * that only grows is reported incrementally. The unit is cents of Wisp fee.
+ * since the last report (tracked in billing_periods.reported_fee). Optimistic
+ * compare-and-swap on reported_fee prevents concurrent rollups from double-
+ * charging; Stripe idempotency keys guard partial retries.
  */
 export async function reportMeteredUsage(
   tenantId: string,
@@ -103,24 +103,45 @@ export async function reportMeteredUsage(
     .eq("period_start", periodStart)
     .maybeSingle();
 
-  const reportedCents = Math.round(Number(period?.reported_fee ?? 0) * 100);
+  const oldReportedFee = Number(period?.reported_fee ?? 0);
+  const reportedCents = Math.round(oldReportedFee * 100);
   const targetCents = Math.max(Math.round(feeUsd * 100), 0);
   const deltaCents = targetCents - reportedCents;
-  if (deltaCents <= 0) return; // nothing new to bill — idempotent
+  if (deltaCents <= 0) return;
 
-  await ensureMeteredSubscription(stripe, cfg.stripe_customer_id);
-
-  await stripe.billing.meterEvents.create({
-    event_name: STRIPE_METER_EVENT,
-    payload: {
-      stripe_customer_id: cfg.stripe_customer_id,
-      value: String(deltaCents),
-    },
-  });
-
-  await admin
+  // Reserve the new reported_fee before calling Stripe (lost race => skip).
+  const { data: reserved } = await admin
     .from("billing_periods")
     .update({ reported_fee: feeUsd })
     .eq("tenant_id", tenantId)
-    .eq("period_start", periodStart);
+    .eq("period_start", periodStart)
+    .eq("reported_fee", oldReportedFee)
+    .select("id")
+    .maybeSingle();
+
+  if (!reserved) return;
+
+  try {
+    await ensureMeteredSubscription(stripe, cfg.stripe_customer_id);
+
+    await stripe.billing.meterEvents.create(
+      {
+        event_name: STRIPE_METER_EVENT,
+        payload: {
+          stripe_customer_id: cfg.stripe_customer_id,
+          value: String(deltaCents),
+        },
+      },
+      { idempotencyKey: `wisp-${tenantId}-${periodStart}-${targetCents}` },
+    );
+  } catch (err) {
+    // Stripe failed after CAS — revert so the next rollup can retry the delta.
+    await admin
+      .from("billing_periods")
+      .update({ reported_fee: oldReportedFee })
+      .eq("tenant_id", tenantId)
+      .eq("period_start", periodStart)
+      .eq("reported_fee", feeUsd);
+    throw err;
+  }
 }
