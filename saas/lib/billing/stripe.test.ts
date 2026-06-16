@@ -11,9 +11,9 @@ vi.mock("stripe", () => ({
   default: vi.fn(() => mockStripe),
 }));
 
-// Admin client mock: billing_config read, billing_periods read (reported_fee)
-// + update. Defaults to a billing-enabled tenant with nothing reported yet.
 let reportedFee = 0;
+let casWins = true;
+
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
     from: (table: string) => {
@@ -32,14 +32,25 @@ vi.mock("@/lib/supabase/admin", () => ({
       if (table === "billing_periods") {
         return {
           select: () => ({
-            eq: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { reported_fee: reportedFee } }) }) }),
+            eq: () => ({
+              eq: () => ({
+                maybeSingle: async () => ({ data: { reported_fee: reportedFee } }),
+              }),
+            }),
           }),
           update: (vals: { reported_fee: number }) => ({
             eq: () => ({
-              eq: async () => {
-                reportedFee = vals.reported_fee;
-                return {};
-              },
+              eq: () => ({
+                eq: () => ({
+                  select: () => ({
+                    maybeSingle: async () => {
+                      if (!casWins) return { data: null };
+                      reportedFee = vals.reported_fee;
+                      return { data: { id: "period-1" } };
+                    },
+                  }),
+                }),
+              }),
             }),
           }),
         };
@@ -53,6 +64,7 @@ describe("stripe billing (metered, meter events)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     reportedFee = 0;
+    casWins = true;
     process.env.WISP_STRIPE_SECRET = "sk_test_fake";
     mockStripe.prices.list.mockResolvedValue({ data: [{ id: "price_test" }] });
     mockStripe.subscriptions.list.mockResolvedValue({
@@ -64,14 +76,17 @@ describe("stripe billing (metered, meter events)", () => {
   it("reports the fee in cents as a meter event when billing is enabled", async () => {
     const { reportMeteredUsage, STRIPE_METER_EVENT } = await import("./stripe");
     await reportMeteredUsage("tenant-1", 12.34, "2026-06-01");
-    expect(mockStripe.billing.meterEvents.create).toHaveBeenCalledWith({
-      event_name: STRIPE_METER_EVENT,
-      payload: { stripe_customer_id: "cus_test", value: "1234" },
-    });
+    expect(mockStripe.billing.meterEvents.create).toHaveBeenCalledWith(
+      {
+        event_name: STRIPE_METER_EVENT,
+        payload: { stripe_customer_id: "cus_test", value: "1234" },
+      },
+      { idempotencyKey: "wisp-tenant-1-2026-06-01-1234" },
+    );
   });
 
   it("only reports the delta since the last report (idempotent)", async () => {
-    reportedFee = 12.34; // already reported $12.34 this period
+    reportedFee = 12.34;
     const { reportMeteredUsage } = await import("./stripe");
     await reportMeteredUsage("tenant-1", 12.34, "2026-06-01");
     expect(mockStripe.billing.meterEvents.create).not.toHaveBeenCalled();
@@ -83,7 +98,15 @@ describe("stripe billing (metered, meter events)", () => {
     await reportMeteredUsage("tenant-1", 12.5, "2026-06-01");
     expect(mockStripe.billing.meterEvents.create).toHaveBeenCalledWith(
       expect.objectContaining({ payload: expect.objectContaining({ value: "250" }) }),
+      expect.objectContaining({ idempotencyKey: expect.stringContaining("wisp-tenant-1") }),
     );
+  });
+
+  it("skips Stripe when CAS loses a concurrent rollup race", async () => {
+    casWins = false;
+    const { reportMeteredUsage } = await import("./stripe");
+    await reportMeteredUsage("tenant-1", 12.34, "2026-06-01");
+    expect(mockStripe.billing.meterEvents.create).not.toHaveBeenCalled();
   });
 
   it("creates a stripe customer when missing", async () => {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { BILLING_STATUS_RANK, invoicePeriodStart } from "@/lib/billing/webhook-utils";
 
 export const runtime = "nodejs";
 
@@ -18,10 +19,7 @@ function customerIdOf(invoice: Stripe.Invoice): string | null {
 
 /**
  * Stripe billing lifecycle. We verify the signature against the RAW body, then
- * reconcile invoice status back onto billing_periods. Invoices are generated
- * automatically by the metered subscription (we no longer create them by hand),
- * so we resolve the tenant from the invoice's customer and update its latest
- * period rather than matching on a pre-stored invoice id.
+ * reconcile invoice status onto the matching billing_periods row.
  */
 export async function POST(req: Request) {
   const sig = req.headers.get("stripe-signature");
@@ -44,7 +42,7 @@ export async function POST(req: Request) {
   if (event.type === "invoice.paid" || event.type === "invoice.finalized") {
     const invoice = event.data.object as Stripe.Invoice;
     const customerId = customerIdOf(invoice);
-    const status = event.type === "invoice.paid" ? "paid" : "invoiced";
+    const nextStatus = event.type === "invoice.paid" ? "paid" : "invoiced";
 
     if (customerId) {
       const { data: cfg } = await supabase
@@ -54,25 +52,33 @@ export async function POST(req: Request) {
         .maybeSingle();
 
       if (cfg) {
-        // Reconcile the tenant's most recent period.
-        const { data: period } = await supabase
+        const periodStart = invoicePeriodStart(invoice);
+        let query = supabase
           .from("billing_periods")
-          .select("id")
-          .eq("tenant_id", cfg.tenant_id)
-          .order("period_start", { ascending: false })
-          .limit(1)
-          .maybeSingle();
+          .select("id, status")
+          .eq("tenant_id", cfg.tenant_id);
+
+        if (periodStart) {
+          query = query.eq("period_start", periodStart);
+        } else {
+          query = query.order("period_start", { ascending: false }).limit(1);
+        }
+
+        const { data: period } = await query.maybeSingle();
 
         if (period) {
-          await supabase
-            .from("billing_periods")
-            .update({ status, stripe_invoice_id: invoice.id })
-            .eq("id", period.id);
+          const currentRank = BILLING_STATUS_RANK[period.status ?? "open"] ?? 0;
+          const nextRank = BILLING_STATUS_RANK[nextStatus] ?? 0;
+          if (nextRank >= currentRank) {
+            await supabase
+              .from("billing_periods")
+              .update({ status: nextStatus, stripe_invoice_id: invoice.id })
+              .eq("id", period.id);
+          }
         }
       }
     }
   }
-  // All other events are acknowledged so Stripe stops retrying.
 
   return NextResponse.json({ received: true });
 }

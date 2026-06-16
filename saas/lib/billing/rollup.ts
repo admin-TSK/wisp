@@ -2,6 +2,7 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { RATE_CARD } from "@/lib/billing/rate-card";
 import { summarize, type ModelRate, type UsageWindow } from "@/lib/billing/net-of-cache";
+import { log } from "@/lib/logger";
 
 /**
  * Authoritative billing rollup. Runs under the service role (bypasses RLS) so it
@@ -89,10 +90,16 @@ export async function rollupTenant(tenantId: string): Promise<{ tenantId: string
   );
 
   try {
-    const { reportMeteredUsage } = await import("@/lib/billing/stripe");
-    await reportMeteredUsage(tenantId, s.wispFee, start.slice(0, 10));
-  } catch {
-    // Stripe may not be configured in dev — rollup still succeeds.
+    const { reportMeteredUsage, getStripe } = await import("@/lib/billing/stripe");
+    if (getStripe()) {
+      await reportMeteredUsage(tenantId, s.wispFee, start.slice(0, 10));
+    }
+  } catch (err) {
+    log("error", "rollup.stripe_failed", {
+      tenantId,
+      periodStart: start.slice(0, 10),
+      error: err instanceof Error ? err.message : String(err),
+    });
   }
 
   return { tenantId, fee: s.wispFee };

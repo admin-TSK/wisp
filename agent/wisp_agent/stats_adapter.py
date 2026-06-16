@@ -51,9 +51,12 @@ def _parse_log_line(raw: dict) -> tuple[str, _Agg] | None:
     model = raw.get("model")
     if not model:
         return None
-    original = int(raw.get("input_tokens_original") or 0)
-    optimized = int(raw.get("input_tokens_optimized") or original)
-    output = int(raw.get("output_tokens") or 0)
+    try:
+        original = int(raw.get("input_tokens_original") or 0)
+        optimized = int(raw.get("input_tokens_optimized") or original)
+        output = int(raw.get("output_tokens") or 0)
+    except (TypeError, ValueError):
+        return None
     return str(model), _Agg(
         requests=1,
         input_original=original,

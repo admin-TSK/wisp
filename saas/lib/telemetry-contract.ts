@@ -32,8 +32,12 @@ export const usageBatchSchema = z
     batch_id: z.string().uuid(),
     agent_version: z.string().max(32),
     headroom_version: z.string().max(32),
-    window_start: z.string().datetime(),
-    window_end: z.string().datetime(),
+    // Accept both 'Z' and explicit UTC offsets (e.g. +00:00). The Python agent's
+    // datetime.isoformat() emits a +00:00 offset, which the default Z-only
+    // validator rejected — silently 422-ing every real batch. Still rejects
+    // zone-less (naive) timestamps.
+    window_start: z.string().datetime({ offset: true }),
+    window_end: z.string().datetime({ offset: true }),
     events: z.array(usageEventSchema).max(2000),
   })
   .strict();

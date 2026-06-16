@@ -58,17 +58,17 @@ const trust = [
   {
     icon: ShieldCheck,
     title: "PII-free by design",
-    body: "Telemetry is aggregate token counts and model names — never prompts, repos, or hostnames. The strict schema is enforced in code and CI fails if a forbidden field slips in.",
+    body: "Telemetry is aggregate token counts and model names, never prompts, repos, or hostnames. The schema is enforced in code, and CI fails the build if a forbidden field ever slips in.",
   },
   {
     icon: Receipt,
     title: "Savings-based billing",
-    body: "Wisp prices from the savings token compression creates. Removed tokens are valued at the cache-blended rate you'd actually pay — then we take a capped 10%. Reconciliation CSV anytime.",
+    body: "We value the tokens Wisp removes at the cache-blended rate you'd actually pay, then take a capped 10% of that. Export a reconciliation CSV whenever finance asks.",
   },
   {
     icon: GitBranch,
     title: "Compression you can reproduce",
-    body: "A pinned, eval-gated compression engine and an inspectable agent mean savings can be recomputed from the same inputs — no black-box math, no surprise true-ups.",
+    body: "The compression engine is pinned and eval-gated, and the agent is open to inspection, so anyone can recompute the savings from the same inputs. No black-box math, no surprise true-ups.",
   },
 ] as const;
 
@@ -126,7 +126,7 @@ export default function MarketingPage() {
   return (
     <>
       {/* Hero */}
-      <section className="marketing-grid relative overflow-hidden border-b border-border">
+      <section className="relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_75%_55%_at_50%_-10%,rgba(10,132,255,0.20),transparent)]" />
         <div className="relative mx-auto grid max-w-6xl gap-2xl px-base py-2xl lg:grid-cols-[1fr_1.05fr] lg:items-center lg:px-lg lg:py-3xl">
           <div>
@@ -141,9 +141,9 @@ export default function MarketingPage() {
               </span>
             </h1>
             <p className="mt-base max-w-lg text-pretty text-body leading-relaxed text-text-secondary">
-              Wisp is token compression for enterprise LLM usage. It removes costly input context
-              before requests hit the model, scales through MDM-managed devices or central gateways,
-              and prices as a capped share of measured net savings.
+              Wisp strips redundant context out of LLM requests before they reach the model, so
+              bills drop while developers keep working exactly as they do today. Roll it out through
+              MDM or a central gateway, and pay only a capped share of the savings we measure.
             </p>
             <div className="mt-lg flex flex-col gap-sm sm:flex-row sm:items-center">
               <Link
@@ -180,7 +180,7 @@ export default function MarketingPage() {
       </section>
 
       {/* Trust bar */}
-      <section className="border-b border-border bg-bg/60 py-base">
+      <section className="bg-bg/60 py-base">
         <ul className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-lg gap-y-sm px-base text-caption text-text-secondary lg:px-lg">
           {proofs.map(({ icon: Icon, label }) => (
             <li key={label} className="inline-flex items-center gap-sm">
@@ -192,7 +192,7 @@ export default function MarketingPage() {
       </section>
 
       {/* Tools strip */}
-      <section className="border-b border-border bg-bg-elevated/40 py-xl">
+      <section className="bg-bg-elevated/40 py-xl">
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-base px-base lg:px-lg">
           <p className="text-caption uppercase tracking-widest text-text-tertiary">
             Drops into the tools your teams already use
@@ -214,8 +214,8 @@ export default function MarketingPage() {
       <section id="how-it-works" className="mx-auto max-w-6xl px-base py-2xl lg:px-lg lg:py-3xl">
         <SectionHeading
           eyebrow="How it works"
-          title="Token compression is the product. Enterprise scale is the delivery model."
-          description="Wisp compresses LLM inputs wherever your teams generate them, then makes those savings deployable, governable, and billable across the fleet."
+          title="Compression cuts the bill. Wisp runs it at fleet scale."
+          description="The engine compresses prompts, tool output, logs, and code context. Wisp wraps it in the rollout, policy, telemetry, and billing an enterprise needs to run it for real."
         />
         <ol className="mt-2xl grid gap-lg lg:grid-cols-3">
           {steps.map(({ icon: Icon, title, body }, i) => (
@@ -237,13 +237,13 @@ export default function MarketingPage() {
       </section>
 
       {/* Product preview — fleet */}
-      <section className="border-t border-border bg-bg-elevated/20 py-2xl lg:py-3xl">
+      <section className="bg-bg-elevated/20 py-2xl lg:py-3xl">
         <div className="mx-auto grid max-w-6xl items-center gap-2xl px-base lg:grid-cols-[1fr_1.05fr] lg:px-lg">
           <div>
             <SectionHeading
               eyebrow="Fleet control"
               title="One dashboard for enterprise compression"
-              description="See where Wisp is running, which policy each group uses, and how much token compression is saving — then tune coverage without touching a single laptop."
+              description="See where Wisp is running, which policy each group is on, and how much it's saving. Then tune coverage without touching a single laptop."
             />
             <ul className="mt-lg space-y-sm">
               {[
@@ -263,12 +263,12 @@ export default function MarketingPage() {
       </section>
 
       {/* Trust */}
-      <section className="border-y border-border bg-bg-elevated/30 py-2xl lg:py-3xl">
+      <section className="bg-bg-elevated/30 py-2xl lg:py-3xl">
         <div className="mx-auto max-w-6xl px-base lg:px-lg">
           <SectionHeading
             eyebrow="Built for trust"
-            title="Compression savings procurement can trust"
-            description="Wisp makes token reduction measurable, privacy-preserving, and reconcilable enough for enterprise finance and security teams."
+            title="Numbers your finance and security teams can verify"
+            description="Every dollar of savings traces back to a measured token count, and no prompt content ever leaves the device to get there."
           />
           <div className="mt-2xl grid gap-lg md:grid-cols-3">
             {trust.map(({ icon: Icon, title, body }) => (
@@ -288,12 +288,12 @@ export default function MarketingPage() {
       </section>
 
       {/* Build vs. buy */}
-      <section className="border-y border-border bg-bg-elevated/20 py-2xl lg:py-3xl">
+      <section className="bg-bg-elevated/20 py-2xl lg:py-3xl">
         <div className="mx-auto max-w-5xl px-base lg:px-lg">
         <SectionHeading
           eyebrow="Build vs. buy"
           title="Enterprise token compression beats ad hoc scripts"
-          description="The compression creates the savings. Wisp makes that compression reliable across enterprise compute, device management, policy, telemetry, and billing."
+          description="Anyone can pipe prompts through a compression script. Keeping it running across hundreds of machines, with central policy and audited billing, is the part that's actually hard."
           align="center"
           className="mb-2xl"
         />
@@ -333,9 +333,9 @@ export default function MarketingPage() {
       {/* Pricing */}
       <section id="pricing" className="mx-auto max-w-5xl px-base py-2xl lg:px-lg lg:py-3xl">
         <SectionHeading
-          eyebrow="No-brainer pricing"
-          title="Pay from compression savings — not seats"
-          description="Start in shadow mode, prove token reduction against real usage, then pay Wisp a capped share of the net savings it creates."
+          eyebrow="Pricing"
+          title="Pay from savings, not seats"
+          description="Start in shadow mode and watch the savings add up against real usage. When you're convinced, switch on billing and pay a capped share of the net."
           align="center"
           className="mb-2xl"
         />
@@ -393,7 +393,7 @@ export default function MarketingPage() {
       </section>
 
       {/* FAQ */}
-      <section className="border-t border-border bg-bg-elevated/20 py-2xl lg:py-3xl">
+      <section className="bg-bg-elevated/20 py-2xl lg:py-3xl">
         <div className="mx-auto max-w-3xl px-base lg:px-lg">
           <SectionHeading eyebrow="FAQ" title="Common questions" align="center" className="mb-xl" />
           <div className="space-y-sm">
@@ -418,14 +418,14 @@ export default function MarketingPage() {
       </section>
 
       {/* Final CTA */}
-      <section className="relative overflow-hidden border-t border-border py-2xl lg:py-3xl">
+      <section className="relative overflow-hidden py-2xl lg:py-3xl">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(10,132,255,0.15),transparent_65%)]" />
         <div className="relative mx-auto max-w-2xl px-base text-center lg:px-lg">
           <h2 className="text-balance text-title font-bold tracking-tight text-text-primary lg:text-large-title">
             See your savings in minutes
           </h2>
           <p className="mx-auto mt-base max-w-lg text-pretty text-callout leading-relaxed text-text-secondary">
-            Join the demo workspace with live fleet data — or create your own and enrol your first
+            Join the demo workspace with live fleet data, or create your own and enrol your first
             Mac.
           </p>
           <div className="mt-lg flex flex-col justify-center gap-sm sm:flex-row">

@@ -67,12 +67,16 @@ cat > "$SCRIPTS/postinstall" <<'POST'
 #!/bin/bash
 set -e
 mkdir -p "/Library/Application Support/Wisp" /var/log/wisp /var/lib/wisp
-if [[ ! -f "/Library/Application Support/Wisp/profile.json" ]]; then
-  cp /etc/wisp/profile.template.json "/Library/Application Support/Wisp/profile.json"
-  chmod 600 "/Library/Application Support/Wisp/profile.json"
+PROFILE="/Library/Application Support/Wisp/profile.json"
+if [[ ! -f "$PROFILE" ]]; then
+  cp /etc/wisp/profile.template.json "$PROFILE"
+  chmod 600 "$PROFILE"
 fi
-launchctl bootstrap system /Library/LaunchDaemons/com.wisp.agent.plist 2>/dev/null || \
-  launchctl load /Library/LaunchDaemons/com.wisp.agent.plist 2>/dev/null || true
+# Only start the agent when the profile has been populated by enrol_device.sh.
+if python3 -c "import json,sys; p=json.load(open('$PROFILE')); sys.exit(0 if p.get('enrolment_token') and p.get('tenancy_id') else 1)" 2>/dev/null; then
+  launchctl bootstrap system /Library/LaunchDaemons/com.wisp.agent.plist 2>/dev/null || \
+    launchctl load /Library/LaunchDaemons/com.wisp.agent.plist 2>/dev/null || true
+fi
 POST
 chmod +x "$SCRIPTS/postinstall"
 

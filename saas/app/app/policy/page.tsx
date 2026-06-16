@@ -25,8 +25,9 @@ export default async function PolicyPage({
       <header className="mb-lg">
         <h1 className="text-title text-text-primary">Policy</h1>
         <p className="mt-xs text-callout text-text-secondary">
-          Set compression aggressiveness for your fleet. Changes propagate to the MDM configuration
-          profile on each device&apos;s next check-in.
+          Set the tenant default compression level. To apply on devices, update{" "}
+          <span className="font-mono">policy_level</span> in the MDM profile or re-run{" "}
+          <span className="font-mono">packaging/mdm/enrol_device.sh</span>.
         </p>
       </header>
 

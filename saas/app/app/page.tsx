@@ -9,7 +9,10 @@ import { compactTokens, usd } from "@/lib/utils";
 // equals gross — we say so rather than imply a discount we can't yet measure.
 export default async function SavingsPage() {
   const ctx = await getTenantContext();
-  const { byModel, totals } = ctx ? await getSavings(ctx.tenantId) : { byModel: [], totals: null };
+  const { byModel, totals, takeRate } = ctx
+    ? await getSavings(ctx.tenantId)
+    : { byModel: [], totals: null, takeRate: 0.1 };
+  const feePct = Math.round(takeRate * 100);
   const billableEqualsGross = totals
     ? Math.abs(totals.grossSavings - totals.measuredSavings) < 1e-9
     : false;
@@ -46,7 +49,7 @@ export default async function SavingsPage() {
               </p>
             </Card>
             <Card>
-              <p className="text-caption text-text-secondary">Your Wisp fee (10%)</p>
+              <p className="text-caption text-text-secondary">Your Wisp fee ({feePct}%)</p>
               <p className="mt-xs text-large-title text-accent">{usd(totals.wispFee)}</p>
               <p className="mt-xs text-footnote text-text-tertiary">
                 you keep {usd(totals.measuredSavings - totals.wispFee)}

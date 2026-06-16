@@ -2,8 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BarChart3, CreditCard, LogOut, Server, SlidersHorizontal, Users } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
+import { WorkspaceSwitcher } from "@/components/app/workspace-switcher";
 import { createClient } from "@/lib/supabase/server";
-import { getTenantContext } from "@/lib/queries";
+import { getTenantContext, getUserWorkspaces } from "@/lib/queries";
 import { signOut } from "@/app/login/actions";
 
 const nav = [
@@ -24,12 +25,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const ctx = await getTenantContext();
   if (!ctx) redirect("/onboarding");
 
+  const workspaces = await getUserWorkspaces(user.id);
+
   return (
     <div className="flex min-h-screen">
       <aside className="flex w-60 shrink-0 flex-col border-r border-border bg-surface p-base">
-        <div className="mb-xl px-sm">
+        <div className="mb-base px-sm">
           <Logo href="/app" size="sm" />
         </div>
+        <WorkspaceSwitcher workspaces={workspaces} activeTenantId={ctx.tenantId} />
         <nav aria-label="Primary" className="flex flex-1 flex-col gap-xs">
           {nav.map(({ href, label, icon: Icon }) => (
             <Link

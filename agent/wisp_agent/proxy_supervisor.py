@@ -56,11 +56,18 @@ class ProxySupervisor:
             return
         if self.log_file is not None:
             self.log_file.parent.mkdir(parents=True, exist_ok=True)
+        stderr_target = subprocess.DEVNULL
+        proxy_log = Path("/var/log/wisp/proxy.err")
+        try:
+            proxy_log.parent.mkdir(parents=True, exist_ok=True)
+            stderr_target = open(proxy_log, "ab")  # noqa: SIM115
+        except OSError:
+            pass
         self._proc = subprocess.Popen(  # noqa: S603 (trusted, pinned dependency)
             self._cmd(),
             env=self._env(),
             stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+            stderr=stderr_target,
             start_new_session=os.name == "posix",
         )
 
@@ -80,7 +87,7 @@ class ProxySupervisor:
             payload = json.loads(body)
             return bool(payload.get("ready"))
         except json.JSONDecodeError:
-            return True
+            return False
 
     def is_healthy(self, timeout: float = 2.0) -> bool:
         """Liveness check — prefer readyz for traffic readiness."""

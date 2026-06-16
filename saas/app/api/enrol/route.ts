@@ -65,6 +65,7 @@ export async function POST(req: Request) {
   });
 
   if (tokErr) {
+    await supabase.from("devices").delete().eq("id", device.id);
     return NextResponse.json({ error: "Could not issue token" }, { status: 500 });
   }
 

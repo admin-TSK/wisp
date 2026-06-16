@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getTenantContext } from "@/lib/queries";
+import { setFlash } from "@/lib/tenant-session";
 
 function hashToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
@@ -44,7 +45,8 @@ export async function inviteMember(formData: FormData) {
   if (error) redirect(`/app/members?error=${encodeURIComponent(error.message)}`);
 
   revalidatePath("/app/members");
-  redirect(`/app/members?invite=${encodeURIComponent(token)}&email=${encodeURIComponent(email)}`);
+  await setFlash({ invite_token: token, invite_email: email });
+  redirect("/app/members");
 }
 
 export async function acceptInvite(token: string) {
@@ -68,8 +70,11 @@ export async function acceptInvite(token: string) {
     redirect("/onboarding?error=Invite%20expired");
   }
 
-  const userEmail = (user.email ?? "").toLowerCase();
-  if (userEmail && userEmail !== invite.email.toLowerCase()) {
+  const userEmail = (user.email ?? "").trim().toLowerCase();
+  if (!userEmail) {
+    redirect("/onboarding?error=Your%20account%20needs%20an%20email%20to%20accept%20invites");
+  }
+  if (userEmail !== invite.email.toLowerCase()) {
     redirect(
       `/invite/${token}?error=${encodeURIComponent(`Sign in as ${invite.email} to accept this invite`)}`,
     );
@@ -84,5 +89,7 @@ export async function acceptInvite(token: string) {
     .update({ accepted_at: new Date().toISOString() })
     .eq("id", invite.id);
 
+  const { setActiveTenant } = await import("@/lib/tenant-session");
+  await setActiveTenant(invite.tenant_id);
   redirect("/app");
 }

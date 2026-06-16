@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getTenantContext } from "@/lib/queries";
 import { hashToken, newEnrolSecret } from "@/lib/tokens";
+import { setFlash } from "@/lib/tenant-session";
 
 /**
  * Rotate the tenant's enrolment secret: issue a new one, then revoke all prior
@@ -34,5 +35,6 @@ export async function rotateEnrolSecret() {
     .is("revoked_at", null);
 
   revalidatePath("/app/fleet");
-  redirect(`/app/fleet?enrol_secret=${encodeURIComponent(secret)}`);
+  await setFlash({ enrol_secret: secret });
+  redirect("/app/fleet");
 }

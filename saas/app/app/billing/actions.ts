@@ -27,7 +27,6 @@ export async function enableBilling() {
   const { data: tenant } = await admin.from("tenants").select("name").eq("id", ctx.tenantId).single();
 
   await ensureStripeCustomer(ctx.tenantId, user.email, tenant?.name ?? "Wisp workspace");
-  await rollupTenant(ctx.tenantId);
 
   const { error } = await admin
     .from("billing_config")
@@ -35,6 +34,9 @@ export async function enableBilling() {
     .eq("tenant_id", ctx.tenantId);
 
   if (error) redirect(`/app/billing?error=${encodeURIComponent(error.message)}`);
+
+  // Rollup after billing is enabled so reportMeteredUsage is not skipped.
+  await rollupTenant(ctx.tenantId);
 
   revalidatePath("/app/billing");
   redirect("/app/billing?enabled=1");

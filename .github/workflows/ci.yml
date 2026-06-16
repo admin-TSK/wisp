@@ -17,7 +17,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install pytest ruff
+      - run: pip install pytest ruff "headroom-ai[proxy]==0.25.0" .
       - run: ruff check .
       - run: PYTHONPATH=. pytest -q
 
@@ -63,6 +63,7 @@ jobs:
       - name: Create auth.uid() shim + roles (Supabase parity)
         run: |
           psql -v ON_ERROR_STOP=1 <<'SQL'
+          create extension if not exists pgcrypto;
           create role anon nologin;
           create role authenticated nologin;
           create schema if not exists auth;
@@ -76,6 +77,8 @@ jobs:
             echo "applying $f"
             psql -v ON_ERROR_STOP=1 -f "$f"
           done
+      - name: Apply seed
+        run: psql -v ON_ERROR_STOP=1 -f supabase/seed.sql
       - name: Grant table privileges to authenticated (Supabase default)
         run: |
           psql -v ON_ERROR_STOP=1 -c "grant usage on schema public to anon, authenticated;"

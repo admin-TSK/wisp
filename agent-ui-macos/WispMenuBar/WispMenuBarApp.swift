@@ -13,14 +13,15 @@ struct WispMenuBarApp: App {
             GlanceView(model: model)
                 .frame(width: 280)
         } label: {
-            // Compact label: leaf symbol + today's savings. Accessible name set
-            // so VoiceOver reads a meaningful value, not just an icon.
+            // Compact label: leaf symbol + period net savings. Accessible name
+            // set so VoiceOver reads a meaningful value, not just an icon.
+            // (Value is the cumulative period figure, not a daily total.)
             Label {
-                Text(model.todayUSDShort)
+                Text(model.netUSDShort)
             } icon: {
                 Image(systemName: model.proxyHealthy ? "leaf.fill" : "leaf")
             }
-            .accessibilityLabel("Wisp savings today: \(model.todayUSDShort)")
+            .accessibilityLabel("Wisp savings this period: \(model.netUSDShort)")
         }
         .menuBarExtraStyle(.window)
     }

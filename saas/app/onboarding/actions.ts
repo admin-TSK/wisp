@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { hashToken, newEnrolSecret } from "@/lib/tokens";
+import { setActiveTenant, setFlash } from "@/lib/tenant-session";
 
 // Soft cap on workspaces a single user may own, to blunt automated abuse.
 const MAX_OWNED_WORKSPACES = 5;
@@ -60,7 +61,9 @@ export async function createWorkspace(formData: FormData) {
     .from("enrol_secrets")
     .insert({ tenant_id: tenant.id, secret_hash: hashToken(enrolSecret), label: "initial" });
 
-  redirect(`/app/fleet?enrol_secret=${encodeURIComponent(enrolSecret)}`);
+  await setActiveTenant(tenant.id);
+  await setFlash({ enrol_secret: enrolSecret });
+  redirect("/app/fleet");
 }
 
 /** Join the seeded demo workspace (if configured) to explore live data fast.
@@ -77,5 +80,6 @@ export async function joinDemo() {
       { tenant_id: demoTenant, user_id: user.id, role: "viewer" },
       { onConflict: "tenant_id,user_id", ignoreDuplicates: true },
     );
+  await setActiveTenant(demoTenant);
   redirect("/app");
 }

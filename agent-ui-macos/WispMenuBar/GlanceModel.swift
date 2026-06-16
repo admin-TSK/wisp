@@ -13,42 +13,78 @@ final class GlanceModel: ObservableObject {
         let net_savings_usd: Double
     }
 
-    @Published private(set) var glance: Glance?
-    @Published private(set) var lastError: String?
+    /// Cold-start, loaded, and error are distinct states so the UI never
+    /// renders "no data / paused" while the very first fetch is still in
+    /// flight (review checklist §14.1: loading and error states must exist).
+    enum LoadState {
+        case loading
+        case loaded
+        case failed(String)
+    }
 
-    private var timer: Timer?
+    @Published private(set) var glance: Glance?
+    @Published private(set) var state: LoadState = .loading
+
+    private var pollTask: Task<Void, Never>?
     private let port: Int
+    private let pollInterval: Duration = .seconds(30)
 
     init(port: Int = 8788) {
         self.port = port
-        refresh()
-        // Glanceable surface: poll gently. Respect battery; no tight loop.
-        timer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
-            Task { await self?.refreshAsync() }
+        // Glanceable surface: poll gently in a cancellable loop. A structured
+        // Task avoids the run-loop-mode pitfall of Timer during menu tracking
+        // and tears down cleanly (see deinit). Respect battery; no tight loop.
+        pollTask = Task { [weak self] in
+            while !Task.isCancelled {
+                await self?.refreshAsync()
+                guard let interval = self?.pollInterval else { return }
+                try? await Task.sleep(for: interval)
+            }
         }
     }
 
-    var proxyHealthy: Bool { glance?.proxy_healthy ?? false }
+    deinit {
+        pollTask?.cancel()
+    }
+
+    /// Healthy only counts when we actually have a fresh, successful read.
+    /// During loading or after a failure we report not-healthy so the UI
+    /// (menu-bar glyph + status row) never shows a stale "active" state.
+    var proxyHealthy: Bool {
+        if case .loaded = state { return glance?.proxy_healthy ?? false }
+        return false
+    }
+
     var policyLevel: String { glance?.policy_level ?? "—" }
 
-    var todayUSDShort: String {
-        guard let g = glance else { return "—" }
-        return Self.currency.string(from: NSNumber(value: g.net_savings_usd)) ?? "$0"
-    }
+    /// Net (billable) savings, compact — shown in the menu-bar label.
+    /// NOTE: this is the cumulative period figure the agent reports, not a
+    /// daily total (the /glance contract has no date window).
+    var netUSDShort: String { format(glance?.net_savings_usd) }
 
     func grossUSD() -> String { format(glance?.gross_savings_usd) }
     func netUSD() -> String { format(glance?.net_savings_usd) }
+
+    /// Tokens removed, grouped (e.g. "1,240,000"). Reinforces meter trust.
+    func tokensRemoved() -> String {
+        guard let n = glance?.total_tokens_removed else { return "—" }
+        return Self.decimal.string(from: NSNumber(value: n)) ?? "\(n)"
+    }
 
     func refresh() { Task { await refreshAsync() } }
 
     func refreshAsync() async {
         guard let url = URL(string: "http://127.0.0.1:\(port)/glance") else { return }
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 5 // localhost; fail fast rather than hang the glance
         do {
-            let (data, _) = try await URLSession.shared.data(from: url)
+            let (data, _) = try await URLSession.shared.data(for: request)
             glance = try JSONDecoder().decode(Glance.self, from: data)
-            lastError = nil
+            state = .loaded
         } catch {
-            lastError = "Wisp agent not reachable"
+            // Recovery-focused and non-alarming: the agent is usually just
+            // starting up or restarting. Last-known glance value is retained.
+            state = .failed("Can’t reach the Wisp agent — it may be starting up.")
         }
     }
 
@@ -61,6 +97,13 @@ final class GlanceModel: ObservableObject {
         let f = NumberFormatter()
         f.numberStyle = .currency
         f.currencyCode = "USD"
+        return f
+    }()
+
+    private static let decimal: NumberFormatter = {
+        let f = NumberFormatter()
+        f.numberStyle = .decimal
+        f.maximumFractionDigits = 0
         return f
     }()
 }

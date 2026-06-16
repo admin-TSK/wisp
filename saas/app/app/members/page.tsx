@@ -1,18 +1,22 @@
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getTenantContext, getMembers, getPendingInvites } from "@/lib/queries";
+import { consumeFlash } from "@/lib/tenant-session";
 import { siteUrl } from "@/lib/site";
 import { inviteMember } from "./actions";
 
 export default async function MembersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; invite?: string; email?: string }>;
+  searchParams: Promise<{ error?: string }>;
 }) {
   const ctx = await getTenantContext();
   const members = ctx ? await getMembers(ctx.tenantId) : [];
   const pending = ctx ? await getPendingInvites(ctx.tenantId) : [];
-  const { error, invite, email } = await searchParams;
+  const { error } = await searchParams;
+  const flash = await consumeFlash();
+  const invite = flash?.invite_token;
+  const email = flash?.invite_email;
   const canInvite = ctx && ctx.role !== "viewer";
 
   return (

@@ -23,10 +23,16 @@ export async function GET(req: Request) {
 
   const url = new URL(req.url);
   const month = url.searchParams.get("month"); // YYYY-MM optional
+  if (month && !/^\d{4}-\d{2}$/.test(month)) {
+    return NextResponse.json({ error: "Invalid month; use YYYY-MM" }, { status: 400 });
+  }
   const now = new Date();
   const [y, m] = month
     ? month.split("-").map(Number)
     : [now.getUTCFullYear(), now.getUTCMonth() + 1];
+  if (!Number.isFinite(y) || !Number.isFinite(m) || m < 1 || m > 12) {
+    return NextResponse.json({ error: "Invalid month" }, { status: 400 });
+  }
   const start = new Date(Date.UTC(y, m - 1, 1)).toISOString();
   const end = new Date(Date.UTC(y, m, 1)).toISOString();
 
