@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { log } from "@/lib/logger";
+import {
+  checkTelemetryRateLimit,
+  rateLimitMisconfiguredResponse,
+  rateLimitResponse,
+} from "@/lib/rate-limit";
 import { usageBatchSchema } from "@/lib/telemetry-contract";
 import { bearerFrom, hashToken } from "@/lib/tokens";
 
@@ -18,12 +23,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Missing enrolment token" }, { status: 401 });
   }
 
+  const tokenHash = hashToken(token);
+  const rl = await checkTelemetryRateLimit(req, tokenHash);
+  if ("misconfigured" in rl) return rateLimitMisconfiguredResponse();
+  if (rl.limited) return rateLimitResponse(rl);
+
   const supabase = createAdminClient();
 
   const { data: tokenRow } = await supabase
     .from("enrolment_tokens")
     .select("tenant_id, device_id, revoked_at")
-    .eq("token_hash", hashToken(token))
+    .eq("token_hash", tokenHash)
     .maybeSingle();
 
   if (!tokenRow || tokenRow.revoked_at) {

@@ -56,7 +56,19 @@ def load_config() -> AgentConfig:
     def get(env_key: str, profile_key: str, default: str | None = None) -> str | None:
         return os.environ.get(env_key, profile.get(profile_key, default))
 
-    tenancy_id = get("WISP_TENANCY_ID", "tenancy_id")
+    def get_any(
+        env_keys: tuple[str, ...], profile_key: str, default: str | None = None
+    ) -> str | None:
+        for key in env_keys:
+            val = os.environ.get(key)
+            if val:
+                return val
+        return profile.get(profile_key, default)
+
+    # WISP_TENANT_ID is the name used by the MDM enrol script and every deployment
+    # doc; WISP_TENANCY_ID is the historical agent name. Accept both so the
+    # env-only gateway/container path works with the documented variable.
+    tenancy_id = get_any(("WISP_TENANT_ID", "WISP_TENANCY_ID"), "tenancy_id")
     device_id = get("WISP_DEVICE_ID", "device_id")
     saas_endpoint = get("WISP_SAAS_ENDPOINT", "saas_endpoint")
     enrolment_token = get("WISP_ENROLMENT_TOKEN", "enrolment_token")
@@ -64,7 +76,7 @@ def load_config() -> AgentConfig:
     missing = [
         name
         for name, val in {
-            "WISP_TENANCY_ID": tenancy_id,
+            "WISP_TENANT_ID": tenancy_id,
             "WISP_DEVICE_ID": device_id,
             "WISP_SAAS_ENDPOINT": saas_endpoint,
             "WISP_ENROLMENT_TOKEN": enrolment_token,

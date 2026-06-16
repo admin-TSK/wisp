@@ -1,6 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { hashToken } from "@/lib/tokens";
 
+const checkEnrolRateLimit = vi.fn().mockResolvedValue({ limited: false });
+
+vi.mock("@/lib/rate-limit", () => ({
+  checkEnrolRateLimit: (...args: unknown[]) => checkEnrolRateLimit(...args),
+  rateLimitResponse: (r: { retryAfterSeconds: number }) =>
+    new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
+      status: 429,
+      headers: { "Retry-After": String(r.retryAfterSeconds) },
+    }),
+  rateLimitMisconfiguredResponse: () =>
+    new Response(JSON.stringify({ error: "Rate limiting unavailable" }), { status: 503 }),
+}));
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let secretRow: any = { tenant_id: "TEN-from-secret", revoked_at: null };
 const deviceInsertSpy = vi.fn(() => ({
@@ -37,6 +50,7 @@ function makeReq(body: unknown, headers: Record<string, string> = { "x-wisp-enro
 beforeEach(() => {
   vi.clearAllMocks();
   secretRow = { tenant_id: "TEN-from-secret", revoked_at: null };
+  checkEnrolRateLimit.mockResolvedValue({ limited: false });
 });
 
 describe("POST /api/enrol", () => {
@@ -80,5 +94,14 @@ describe("POST /api/enrol", () => {
     const json = await res.json();
     expect(json.device_id).toBe("DEV1");
     expect(typeof json.enrolment_token).toBe("string");
+  });
+
+  it("429 when rate limited", async () => {
+    checkEnrolRateLimit.mockResolvedValueOnce({ limited: true, retryAfterSeconds: 30 });
+    const { POST } = await import("./route");
+    const res = await POST(makeReq({ enrolment_label: "Mac" }));
+    expect(res.status).toBe(429);
+    expect(res.headers.get("Retry-After")).toBe("30");
+    expect(deviceInsertSpy).not.toHaveBeenCalled();
   });
 });
