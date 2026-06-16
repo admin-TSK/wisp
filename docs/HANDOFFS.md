@@ -39,13 +39,59 @@ Steps that require accounts or secrets outside this repo. Everything else is imp
 
 ---
 
+## Gateway / container deployment (no MDM)
+
+For orgs that run the agent as a container/sidecar in front of a central gateway
+(LiteLLM / Bedrock / Azure) instead of per-device MDM. There is no on-disk MDM
+profile here, so the agent is configured **entirely by environment variables**.
+
+Two distinct credentials — do not confuse them:
+- **Enrol secret** (`X-Wisp-Enrol-Secret`) authorizes *creating* a device. Per-tenant, minted in the dashboard.
+- **Device token** (`WISP_ENROLMENT_TOKEN`) authenticates *telemetry* for one device. Returned once by `/api/enrol`.
+
+1. Enrol once to mint a device + token:
+   ```bash
+   curl -sf -X POST "$WISP_SAAS_ENDPOINT/api/enrol" \
+     -H "X-Wisp-Enrol-Secret: $WISP_ENROL_SECRET" \
+     -H "Content-Type: application/json" \
+     -d '{"enrolment_label":"gateway-1","group_name":"Gateway"}'
+   # → {"device_id":"<uuid>","enrolment_token":"<token>"}
+   ```
+2. Run the agent with the resolved values:
+   ```bash
+   docker run --rm \
+     -e WISP_TENANT_ID=<tenant-uuid> \
+     -e WISP_DEVICE_ID=<device-uuid> \
+     -e WISP_SAAS_ENDPOINT="$WISP_SAAS_ENDPOINT" \
+     -e WISP_ENROLMENT_TOKEN=<token> \
+     -e WISP_POLICY_LEVEL=aggressive \
+     wisp-agent
+   ```
+
+Runtime env (read by `agent/wisp_agent/config.py`):
+
+| Variable | Required | Notes |
+|----------|----------|-------|
+| `WISP_TENANT_ID` | yes | tenant UUID (alias: `WISP_TENANCY_ID`) |
+| `WISP_DEVICE_ID` | yes | from `/api/enrol` |
+| `WISP_SAAS_ENDPOINT` | yes | SaaS base URL |
+| `WISP_ENROLMENT_TOKEN` | yes | device token from `/api/enrol` — **not** the enrol secret |
+| `WISP_POLICY_LEVEL` | optional | `off`/`conservative`/`balanced`/`aggressive` (default `aggressive`) |
+| `WISP_PROXY_PORT` / `WISP_LOCAL_STATS_PORT` | optional | defaults 8787 / 8788 |
+| `WISP_FLUSH_INTERVAL` | optional | telemetry flush seconds (default 300) |
+
+Point each covered tool's base URL at the proxy (`http://<host>:8787`), exactly as MDM does per device.
+
+---
+
 ## Stripe (billing go-live)
 
 1. Create Stripe account (test first)
-2. Run once with test key:
+2. Run once with test key (from repo root, using SaaS `node_modules`):
    ```bash
-   WISP_STRIPE_SECRET=sk_test_... node scripts/setup_stripe.mjs
+   NODE_PATH=saas/node_modules WISP_STRIPE_SECRET=sk_test_... node scripts/setup_stripe.mjs
    ```
+   Or inline from `saas/` with the Stripe SDK installed there.
 3. Set in Vercel **Production** env:
    - `WISP_STRIPE_SECRET`
    - `WISP_STRIPE_WEBHOOK_SECRET` (from Stripe Dashboard → Webhooks → `/api/stripe/webhook`)
@@ -86,6 +132,8 @@ Set `NEXT_PUBLIC_SITE_URL` to your production SaaS URL so redirect links are cor
 | `WISP_SUPABASE_ANON_KEY` | yes | |
 | `WISP_SUPABASE_SERVICE_ROLE` | yes | server only; rotate if ever exposed |
 | `WISP_CRON_SECRET` | yes | daily rollup cron |
+| `UPSTASH_REDIS_REST_URL` | yes (prod ingest) | rate limiting; provision via `vercel integration add upstash/upstash-kv` |
+| `UPSTASH_REDIS_REST_TOKEN` | yes (prod ingest) | paired with URL above |
 | `WISP_DEMO_TENANT_ID` | optional | onboarding demo |
 | `NEXT_PUBLIC_SITE_URL` | yes | invite + auth links |
 | `WISP_STRIPE_*` | handoff | billing |

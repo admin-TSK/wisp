@@ -1,0 +1,21 @@
+{
+  "tenant_id": "00000000-0000-4000-8000-000000000001",
+  "device_id": "00000000-0000-4000-8000-0000000000aa",
+  "agent_version": "0.1.0",
+  "headroom_version": "0.25.0",
+  "window_start": "2026-06-16T23:48:51.153104Z",
+  "window_end": "2026-06-16T23:48:51.153104Z",
+  "events": [
+    {
+      "model": "claude-sonnet-4-6",
+      "requests": 3,
+      "input_tokens_original": 1200,
+      "input_tokens_compressed": 480,
+      "input_tokens_removed": 720,
+      "input_tokens_cache_read": 0,
+      "output_tokens": 88,
+      "policy_level": "aggressive"
+    }
+  ],
+  "batch_id": "00000000-0000-4000-8000-0000000000b1"
+}

@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  checkEnrolRateLimit,
+  rateLimitMisconfiguredResponse,
+  rateLimitResponse,
+} from "@/lib/rate-limit";
 import { hashToken, newEnrolmentToken } from "@/lib/tokens";
 
 export const runtime = "nodejs";
@@ -25,6 +30,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Enrolment not authorized" }, { status: 401 });
   }
 
+  const secretHash = hashToken(secret);
+  const rl = await checkEnrolRateLimit(req, secretHash);
+  if ("misconfigured" in rl) return rateLimitMisconfiguredResponse();
+  if (rl.limited) return rateLimitResponse(rl);
+
   const supabase = createAdminClient();
 
   // Resolve the tenant from the secret hash (constant-work index lookup). A
@@ -32,7 +42,7 @@ export async function POST(req: Request) {
   const { data: secretRow } = await supabase
     .from("enrol_secrets")
     .select("tenant_id, revoked_at")
-    .eq("secret_hash", hashToken(secret))
+    .eq("secret_hash", secretHash)
     .maybeSingle();
 
   if (!secretRow || secretRow.revoked_at) {

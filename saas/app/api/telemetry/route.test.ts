@@ -2,6 +2,19 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("@/lib/logger", () => ({ log: vi.fn() }));
 
+const checkTelemetryRateLimit = vi.fn().mockResolvedValue({ limited: false });
+
+vi.mock("@/lib/rate-limit", () => ({
+  checkTelemetryRateLimit: (...args: unknown[]) => checkTelemetryRateLimit(...args),
+  rateLimitResponse: (r: { retryAfterSeconds: number }) =>
+    new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
+      status: 429,
+      headers: { "Retry-After": String(r.retryAfterSeconds) },
+    }),
+  rateLimitMisconfiguredResponse: () =>
+    new Response(JSON.stringify({ error: "Rate limiting unavailable" }), { status: 503 }),
+}));
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let tokenRow: any = { tenant_id: "TEN", device_id: "DEV", revoked_at: null };
 const upsertSpy = vi.fn().mockResolvedValue({ error: null });
@@ -63,6 +76,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   tokenRow = { tenant_id: "TEN", device_id: "DEV", revoked_at: null };
   upsertSpy.mockResolvedValue({ error: null });
+  checkTelemetryRateLimit.mockResolvedValue({ limited: false });
 });
 
 describe("POST /api/telemetry", () => {
@@ -119,6 +133,15 @@ describe("POST /api/telemetry", () => {
       makeReq({ ...validBatch(), window_start: "2026-06-15T09:00:00", window_end: "2026-06-15T09:00:00" }),
     );
     expect(res.status).toBe(422);
+    expect(upsertSpy).not.toHaveBeenCalled();
+  });
+
+  it("429 when rate limited", async () => {
+    checkTelemetryRateLimit.mockResolvedValueOnce({ limited: true, retryAfterSeconds: 60 });
+    const { POST } = await import("./route");
+    const res = await POST(makeReq(validBatch()));
+    expect(res.status).toBe(429);
+    expect(res.headers.get("Retry-After")).toBe("60");
     expect(upsertSpy).not.toHaveBeenCalled();
   });
 });
