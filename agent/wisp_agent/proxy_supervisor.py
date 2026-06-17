@@ -51,9 +51,32 @@ class ProxySupervisor:
             cmd.append("--no-optimize")
         return cmd
 
+    def _reclaim_port(self) -> None:
+        """Stop orphaned Headroom processes holding our port (pilot restarts)."""
+        try:
+            out = subprocess.run(  # noqa: S603, S607
+                ["lsof", "-ti", f":{self.port}"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+        except OSError:
+            return
+        for pid_s in out.stdout.strip().split():
+            if not pid_s:
+                continue
+            pid = int(pid_s)
+            if self._proc and self._proc.poll() is None and pid == self._proc.pid:
+                continue
+            try:
+                os.kill(pid, 15)
+            except OSError:
+                pass
+
     def start(self) -> None:
         if self._proc and self._proc.poll() is None:
             return
+        self._reclaim_port()
         if self.log_file is not None:
             self.log_file.parent.mkdir(parents=True, exist_ok=True)
         stderr_target = subprocess.DEVNULL

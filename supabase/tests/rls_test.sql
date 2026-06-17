@@ -87,6 +87,7 @@ do $$ begin
 end $$;
 
 -- C7: viewer of A cannot create invites (owner/admin only).
+set local request.jwt.claims to '{"sub":"22222222-2222-4222-8222-222222222222"}';
 do $$
 declare denied boolean := false;
 begin

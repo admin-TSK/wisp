@@ -16,7 +16,7 @@ export const usageEventSchema = z
     input_tokens_removed: z.number().int().nonnegative(),
     input_tokens_cache_read: z.number().int().nonnegative(),
     output_tokens: z.number().int().nonnegative(),
-    policy_level: z.enum(["off", "conservative", "balanced", "aggressive"]),
+    policy_level: z.enum(["off", "conservative", "balanced", "aggressive", "hyper"]),
     headroom_input_digest: z.string().max(128).optional(),
   })
   .strict();

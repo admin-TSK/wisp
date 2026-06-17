@@ -32,3 +32,6 @@ DerivedData/
 # Logs
 *.log
 logs/
+
+# macOS PKG staging (local build artifacts — never commit)
+packaging/macos/staging/

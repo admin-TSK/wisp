@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getTenantContext } from "@/lib/queries";
 
-const LEVELS = ["off", "conservative", "balanced", "aggressive"] as const;
+const LEVELS = ["off", "conservative", "balanced", "aggressive", "hyper"] as const;
 
 export async function savePolicy(formData: FormData) {
   const ctx = await getTenantContext();
