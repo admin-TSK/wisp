@@ -50,6 +50,8 @@ describe("clientIp", () => {
 
 describe("checkEnrolRateLimit", () => {
   it("passes when Upstash is not configured outside production", async () => {
+    vi.stubEnv("VERCEL_ENV", "development");
+    vi.resetModules();
     const { checkEnrolRateLimit } = await import("./rate-limit");
     const req = new Request("http://x");
     const result = await checkEnrolRateLimit(req, "abc123");
@@ -65,8 +67,8 @@ describe("checkEnrolRateLimit", () => {
   });
 
   it("blocks when IP limit is exceeded", async () => {
-    vi.stubEnv("UPSTASH_REDIS_REST_URL", "https://example.upstash.io");
-    vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "token");
+    vi.stubEnv("KV_REST_API_URL", "https://example.upstash.io");
+    vi.stubEnv("KV_REST_API_TOKEN", "token");
     ipLimit.mockResolvedValue(blocked(45));
     vi.resetModules();
     const { checkEnrolRateLimit } = await import("./rate-limit");
@@ -78,8 +80,8 @@ describe("checkEnrolRateLimit", () => {
 
 describe("checkTelemetryRateLimit", () => {
   it("blocks when token limit is exceeded", async () => {
-    vi.stubEnv("UPSTASH_REDIS_REST_URL", "https://example.upstash.io");
-    vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "token");
+    vi.stubEnv("KV_REST_API_URL", "https://example.upstash.io");
+    vi.stubEnv("KV_REST_API_TOKEN", "token");
     tokenLimit.mockResolvedValue(blocked(120));
     vi.resetModules();
     const { checkTelemetryRateLimit } = await import("./rate-limit");
