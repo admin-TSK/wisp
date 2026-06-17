@@ -17,7 +17,7 @@ DEFAULT_LOCAL_STATS_PORT = 8788
 DEFAULT_FLUSH_INTERVAL_S = 300
 DEFAULT_LOG_FILE = Path("/var/log/wisp/headroom.jsonl")
 DEFAULT_STATE_FILE = Path("/var/lib/wisp/state.json")
-VALID_POLICY_LEVELS = ("off", "conservative", "balanced", "aggressive")
+VALID_POLICY_LEVELS = ("off", "conservative", "balanced", "aggressive", "hyper")
 
 
 @dataclass(frozen=True)

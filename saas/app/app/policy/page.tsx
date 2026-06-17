@@ -7,7 +7,14 @@ const LEVELS = [
   { level: "off", desc: "Passthrough. No compression, no billing." },
   { level: "conservative", desc: "Compress large payloads only (≥2k tokens)." },
   { level: "balanced", desc: "Compress most payloads (≥500 tokens)." },
-  { level: "aggressive", desc: "Compress everything. Maximum savings (default)." },
+  {
+    level: "aggressive",
+    desc: "Compress tool/assistant output with no token floor (default). User and system messages stay verbatim.",
+  },
+  {
+    level: "hyper",
+    desc: "Maximum compression for PAYG/API-key fleets — compress user + system, force kompress. Headroom keeps its subscription-safe guard for Claude Pro/Max OAuth traffic.",
+  },
 ] as const;
 
 export default async function PolicyPage({
